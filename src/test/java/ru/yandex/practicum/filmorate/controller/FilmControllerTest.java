@@ -64,7 +64,9 @@ class FilmControllerTest {
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(190);
 
-        assertThrows(ValidationException.class, () -> {filmController.validationFilm(film3);});
+        assertThrows(ValidationException.class, () -> {
+            filmController.validationFilm(film3);
+        });
     }
 
     @Test
@@ -77,7 +79,9 @@ class FilmControllerTest {
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(190);
 
-        assertThrows(ValidationException.class, () -> {filmController.validationFilm(film3);});
+        assertThrows(ValidationException.class, () -> {
+            filmController.validationFilm(film3);
+        });
     }
 
     @Test
@@ -88,7 +92,9 @@ class FilmControllerTest {
         film3.setReleaseDate(LocalDate.of(1895,Month.DECEMBER,27));
         film3.setDuration(190);
 
-        assertThrows(ValidationException.class, () -> {filmController.validationFilm(film3);});
+        assertThrows(ValidationException.class, () -> {
+            filmController.validationFilm(film3);
+        });
     }
 
     @Test
@@ -99,7 +105,9 @@ class FilmControllerTest {
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(-190);
 
-        assertThrows(ValidationException.class, () -> {filmController.validationFilm(film3);});
+        assertThrows(ValidationException.class, () -> {
+            filmController.validationFilm(film3);
+        });
     }
 
     @Test

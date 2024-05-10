@@ -62,7 +62,9 @@ class UserControllerTest {
         user3.setName("test_name1");
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
-        assertThrows(ValidationException.class, () -> {userController.validationUser(user3);});
+        assertThrows(ValidationException.class, () -> {
+            userController.validationUser(user3);
+        });
     }
 
     @Test
@@ -73,7 +75,9 @@ class UserControllerTest {
         user3.setName("test_name3");
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
-        assertThrows(ValidationException.class, () -> {userController.validationUser(user3);});
+        assertThrows(ValidationException.class, () -> {
+            userController.validationUser(user3);
+        });
     }
 
     @Test
@@ -83,7 +87,9 @@ class UserControllerTest {
         user3.setName("test_name3");
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
-        assertThrows(ValidationException.class, () -> {userController.validationUser(user3);});
+        assertThrows(ValidationException.class, () -> {
+            userController.validationUser(user3);
+        });
     }
 
     @Test
@@ -105,7 +111,9 @@ class UserControllerTest {
         user3.setName("test_name3");
         user3.setBirthday(LocalDate.now().plusMonths(3));
 
-        assertThrows(ValidationException.class, () -> {userController.validationUser(user3);});
+        assertThrows(ValidationException.class, () -> {
+            userController.validationUser(user3);
+        });
     }
 
     @Test

@@ -114,8 +114,8 @@ class FilmControllerTest {
     void test_7ShouldUpdateFilm() {
         filmController.addFilm(film1);
         filmController.addFilm(film2);
-        int film1_id = film1.getId();
-        film3.setId(film1_id);
+        int film1id = film1.getId();
+        film3.setId(film1id);
         film3.setName("film3_name");
         film3.setDescription("film3_description");
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
@@ -124,7 +124,7 @@ class FilmControllerTest {
         filmController.updateFilm(film3);
         Collection<Film> films = filmController.getFilms();
         Film updated = films.stream()
-                .filter(film -> film.getId() == film1_id)
+                .filter(film -> film.getId() == film1id)
                 .findFirst()
                 .orElse(null);
 

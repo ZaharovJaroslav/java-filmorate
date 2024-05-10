@@ -120,8 +120,8 @@ class UserControllerTest {
     void test_8ShouldUpdateUser() {
         userController.createUser(user1);
         userController.createUser(user2);
-        int user1_id = user1.getId();
-        user3.setId(user1_id);
+        int user1id = user1.getId();
+        user3.setId(user1id);
         user3.setEmail("email3@test.ru");
         user3.setLogin("test3");
         user3.setName("test3_name");
@@ -130,7 +130,7 @@ class UserControllerTest {
         userController.upadateUser(user3);
         Collection<User> users = userController.getUsers();
         User updated = users.stream()
-                .filter(user -> user.getId() == user1_id)
+                .filter(user -> user.getId() == user1id)
                 .findFirst()
                 .orElse(null);
 

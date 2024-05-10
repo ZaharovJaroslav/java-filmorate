@@ -13,8 +13,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    final static int DESCRIPTION_LENGTH = 200;
-    final static LocalDate MOVIE_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER,28);
+    private static final int DESCRIPTION_LENGTH = 200;
+    private static final LocalDate MOVIE_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER,28);
     private final Map<Integer, Film> films = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
 
@@ -71,7 +71,7 @@ public class FilmController {
     public int getNextId() {
         int currentMaId = films.keySet()
                 .stream()
-                .mapToInt(id ->id)
+                .mapToInt(id -> id)
                 .max()
                 .orElse(0);
         return ++currentMaId;

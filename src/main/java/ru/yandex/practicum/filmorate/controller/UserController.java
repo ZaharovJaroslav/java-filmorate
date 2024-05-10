@@ -61,7 +61,7 @@ public class UserController {
             String login = user.getLogin();
             for (int i = 0; i < login.length(); i++) {
                 char ch = login.charAt(i);
-                if(Character.isWhitespace(ch)) {
+                if (Character.isWhitespace(ch)) {
                     log.warn("Ошибка валидации: login {}", user.getEmail());
                     throw new ValidationException("логин не может содержать пробел");
                 }
@@ -73,7 +73,7 @@ public class UserController {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if(user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Ошибка валидации: birthday {}", user.getBirthday());
             throw new ValidationException("дата рождения не может быть в будущем");
         }

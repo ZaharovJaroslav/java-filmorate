@@ -17,12 +17,24 @@ import java.util.Map;
 public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
+    private int id;
+
+
+    private int setId() {
+        return ++id;
+    }
 
     @PostMapping
     public User createUser(@RequestBody User user) {
+        int lastId = setId();
+        if (user.getId() <= id) {
+            user.setId(lastId);
+        } else {
+            id = user.getId();
+        }
         log.info("Создание пользователя");
         User newUser = validationUser(user);
-        users.put(getNextId(), newUser);
+        users.put(id, newUser);
         log.info("Пользователь {} успешно создан", newUser.getName());
         return newUser;
     }
@@ -32,11 +44,7 @@ public class UserController {
         if (users.containsKey(user.getId())) {
             User oldUser = users.get(user.getId());
             log.info("Обновление пользователя: id = {}; name = {}",oldUser.getId(), oldUser.getName());
-            User newUser = validationUser(user);
-            oldUser.setName(newUser.getName());
-            oldUser.setLogin(newUser.getLogin());
-            oldUser.setEmail(newUser.getEmail());
-            oldUser.setBirthday(newUser.getBirthday());
+            oldUser = validationUser(user);
             log.info("Пользователь обновлен: id = {}; name = {}", oldUser.getId(), oldUser.getName());
             return oldUser;
         }
@@ -50,9 +58,6 @@ public class UserController {
     }
 
     public User validationUser(User user) {
-        if (user.getId() == 0) {
-            user.setId(getNextId());
-        }
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.warn("Ошибка валидации: email {}", user.getEmail());
             throw new ValidationException("электронная почта не может быть пустой и должна содержать символ <@>");
@@ -73,19 +78,10 @@ public class UserController {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Ошибка валидации: birthday {}", user.getBirthday());
-            throw new ValidationException("дата рождения не может быть в будущем");
+            throw new ValidationException("дата рождения не может быть пустым, а так же не может быть в будущем");
         }
         return user;
-    }
-
-    public int getNextId() {
-        int currentMpId = users.keySet()
-                .stream()
-                .mapToInt(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMpId;
     }
 }

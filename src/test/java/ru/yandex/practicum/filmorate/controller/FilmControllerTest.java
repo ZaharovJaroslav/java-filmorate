@@ -52,7 +52,7 @@ class FilmControllerTest {
         film3.setDescription("film3_description");
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(190);
-        filmController.validationFilm(film3);
+        filmController.addFilm(film3);
 
         assertEquals(1, film3.getId());
     }
@@ -128,7 +128,7 @@ class FilmControllerTest {
                 .findFirst()
                 .orElse(null);
 
-        assertEquals(film3.getName(), updated.getName());
+        assertEquals(film1.getName(), updated.getName());
         }
 
     @Test

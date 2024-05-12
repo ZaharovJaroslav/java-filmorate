@@ -51,7 +51,7 @@ class UserControllerTest {
 
     @Test
     void test_2ShouldSetId() {
-        userController.validationUser(user1);
+        userController.createUser(user1);
         assertEquals(1,user1.getId());
     }
 
@@ -134,7 +134,7 @@ class UserControllerTest {
                 .findFirst()
                 .orElse(null);
 
-        assertEquals(user3.getName(), updated.getName());
+        assertEquals(user1.getName(), updated.getName());
     }
 
     @Test

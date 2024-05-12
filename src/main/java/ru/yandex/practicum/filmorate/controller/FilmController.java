@@ -17,12 +17,24 @@ public class FilmController {
     private static final LocalDate MOVIE_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER,28);
     private final Map<Integer, Film> films = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
+    private int id;
+
+
+    private int setId() {
+        return ++id;
+    }
 
     @PostMapping
     public Film addFilm(@RequestBody Film film) {
+        int lastId = setId();
+        if (film.getId() <= lastId) {
+            film.setId(lastId);
+        } else {
+            id = film.getId();
+        }
         log.info("Добалвение фильма");
         Film newFilm = validationFilm(film);
-        films.put(getNextId(), newFilm);
+        films.put(lastId, newFilm);
         log.info("Фильм {} успешно добавлен", newFilm.getName());
         return newFilm;
     }
@@ -32,11 +44,7 @@ public class FilmController {
         if (films.containsKey(film.getId())) {
             Film oldfilm  = films.get(film.getId());
             log.info("Обновление пользователя: id = {}; name = {}", oldfilm.getId(), oldfilm.getName());
-            Film newFilm = validationFilm(film);
-            oldfilm.setName(newFilm.getName());
-            oldfilm.setDescription(newFilm.getDescription());
-            oldfilm.setReleaseDate(newFilm.getReleaseDate());
-            oldfilm.setDuration(newFilm.getDuration());
+            oldfilm = validationFilm(film);
             log.info("Пользователь обновлен: id = {}; name = {}", oldfilm.getId(), oldfilm.getName());
             return oldfilm;
         }
@@ -45,35 +53,26 @@ public class FilmController {
     }
 
     public Film validationFilm(Film film) {
-        if (film.getId() == 0) {
-            film.setId(getNextId());
-        }
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Название не может быть пустым");
         }
-        if (film.getDescription().length() > DESCRIPTION_LENGTH) {
-            throw new ValidationException("максимальная длина описания — 200 символов");
+        if (film.getDescription() == null || film.getDescription().isBlank()
+                                          || film.getDescription().length() > DESCRIPTION_LENGTH) {
+            throw new ValidationException("Описание не может быть путстым, максимальная длина описания — 200 символов");
         }
-        if (film.getReleaseDate().isBefore(MOVIE_BIRTHDAY)) {
-            throw new ValidationException("дата релиза — не раньше 28 декабря 1895 года");
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(MOVIE_BIRTHDAY)) {
+            throw new ValidationException("Дата релиза не может быть пустым, а так же раньше 28 декабря 1895 года");
         }
-        if (film.getDuration() < 0) {
-            throw new ValidationException("продолжительность фильма должна быть положительным числом");
+        if (film.getDuration() <= 0) {
+            throw new ValidationException("Продолжительность фильма должна быть положительным числом " +
+                                          "а так же не может быть меньше 1 секунды");
         }
         return film;
     }
 
     @GetMapping
-    public Collection<Film> getFilms() {
+    protected Collection<Film> getFilms() {
         return films.values();
     }
 
-    public int getNextId() {
-        int currentMaId = films.keySet()
-                .stream()
-                .mapToInt(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaId;
-    }
 }

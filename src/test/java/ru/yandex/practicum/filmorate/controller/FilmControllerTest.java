@@ -1,3 +1,4 @@
+
 package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -5,6 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -16,7 +19,8 @@ class FilmControllerTest {
     private Film film1;
     private Film film2;
     private Film film3;
-   private FilmController filmController;
+   private FilmService filmService;
+   private UserService userService;
 
     @BeforeEach
     void setUp() {
@@ -33,14 +37,15 @@ class FilmControllerTest {
         film2.setDuration(200);
 
         this.film3 = new Film();
-        this.filmController = new FilmController();
+        this.userService = new UserService();
+        this.filmService = new FilmService(userService);
     }
 
     @Test
     void test_1ShouldAddFilm() {
-        filmController.addFilm(film1);
-        filmController.addFilm(film2);
-        Collection<Film> films = new ArrayList<>(filmController.getFilms());
+        filmService.addFilm(film1);
+        filmService.addFilm(film2);
+        Collection<Film> films = new ArrayList<>(filmService.getFilms());
         assertEquals(2, films.size());
         assertTrue(films.contains(film1));
         assertTrue(films.contains(film2));
@@ -52,7 +57,7 @@ class FilmControllerTest {
         film3.setDescription("film3_description");
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(190);
-        filmController.addFilm(film3);
+        filmService.addFilm(film3);
 
         assertEquals(1, film3.getId());
     }
@@ -65,7 +70,7 @@ class FilmControllerTest {
         film3.setDuration(190);
 
         assertThrows(ValidationException.class, () -> {
-            filmController.validationFilm(film3);
+            filmService.addFilm(film3);
         });
     }
 
@@ -80,7 +85,7 @@ class FilmControllerTest {
         film3.setDuration(190);
 
         assertThrows(ValidationException.class, () -> {
-            filmController.validationFilm(film3);
+            filmService.addFilm(film3);
         });
     }
 
@@ -93,7 +98,7 @@ class FilmControllerTest {
         film3.setDuration(190);
 
         assertThrows(ValidationException.class, () -> {
-            filmController.validationFilm(film3);
+            filmService.addFilm(film3);
         });
     }
 
@@ -106,14 +111,14 @@ class FilmControllerTest {
         film3.setDuration(-190);
 
         assertThrows(ValidationException.class, () -> {
-            filmController.validationFilm(film3);
+            filmService.addFilm(film3);
         });
     }
 
     @Test
     void test_7ShouldUpdateFilm() {
-        filmController.addFilm(film1);
-        filmController.addFilm(film2);
+        filmService.addFilm(film1);
+        filmService.addFilm(film2);
         int film1id = film1.getId();
         film3.setId(film1id);
         film3.setName("film3_name");
@@ -121,8 +126,8 @@ class FilmControllerTest {
         film3.setReleaseDate(LocalDate.of(1998,Month.DECEMBER,29));
         film3.setDuration(190);
 
-        filmController.updateFilm(film3);
-        Collection<Film> films = filmController.getFilms();
+        filmService.updateFilm(film3);
+        Collection<Film> films = filmService.getFilms();
         Film updated = films.stream()
                 .filter(film -> film.getId() == film1id)
                 .findFirst()
@@ -133,9 +138,9 @@ class FilmControllerTest {
 
     @Test
     void test_8ShouldReturnFilms() {
-        filmController.addFilm(film1);
-        filmController.addFilm(film2);
-        Collection<Film> films = filmController.getFilms();
+        filmService.addFilm(film1);
+        filmService.addFilm(film2);
+        Collection<Film> films = filmService.getFilms();
 
         assertEquals(2, films.size());
     }

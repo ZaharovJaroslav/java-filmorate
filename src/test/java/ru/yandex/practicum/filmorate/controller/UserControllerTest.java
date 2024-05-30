@@ -1,3 +1,4 @@
+
 package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -5,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -17,7 +19,7 @@ class UserControllerTest {
     private User user2;
     private User user3;
 
-    private UserController userController;
+    private UserService userService;
 
     @BeforeEach
     void setUp() {
@@ -34,15 +36,15 @@ class UserControllerTest {
         user2.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
         this.user3 = new User();
-        this.userController = new UserController();
+        this.userService = new UserService();
     }
 
 
     @Test
     void test_1ShouldCreateUser() {
-        userController.createUser(user1);
-        userController.createUser(user2);
-        Collection<User> users = userController.getUsers();
+        userService.createUser(user1);
+        userService.createUser(user2);
+        Collection<User> users = userService.getUsers();
 
         assertEquals(2,users.size());
         assertTrue(users.contains(user1));
@@ -51,7 +53,7 @@ class UserControllerTest {
 
     @Test
     void test_2ShouldSetId() {
-        userController.createUser(user1);
+        userService.createUser(user1);
         assertEquals(1,user1.getId());
     }
 
@@ -63,7 +65,7 @@ class UserControllerTest {
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
         assertThrows(ValidationException.class, () -> {
-            userController.validationUser(user3);
+            userService.createUser(user3);
         });
     }
 
@@ -76,7 +78,7 @@ class UserControllerTest {
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
         assertThrows(ValidationException.class, () -> {
-            userController.validationUser(user3);
+            userService.createUser(user3);
         });
     }
 
@@ -88,7 +90,7 @@ class UserControllerTest {
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
         assertThrows(ValidationException.class, () -> {
-            userController.validationUser(user3);
+            userService.createUser(user3);
         });
     }
 
@@ -98,7 +100,7 @@ class UserControllerTest {
         user3.setLogin("test3");
         user3.setName(" ");
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
-        userController.validationUser(user3);
+        userService.createUser(user3);
 
         assertEquals(user3.getLogin(), user3.getName());
     }
@@ -112,14 +114,14 @@ class UserControllerTest {
         user3.setBirthday(LocalDate.now().plusMonths(3));
 
         assertThrows(ValidationException.class, () -> {
-            userController.validationUser(user3);
+            userService.createUser(user3);
         });
     }
 
     @Test
     void test_8ShouldUpdateUser() {
-        userController.createUser(user1);
-        userController.createUser(user2);
+        userService.createUser(user1);
+        userService.createUser(user2);
         int user1id = user1.getId();
         user3.setId(user1id);
         user3.setEmail("email3@test.ru");
@@ -127,8 +129,8 @@ class UserControllerTest {
         user3.setName("test3_name");
         user3.setBirthday(LocalDate.of(1997, Month.AUGUST,5));
 
-        userController.upadateUser(user3);
-        Collection<User> users = userController.getUsers();
+        userService.updateUser(user3);
+        Collection<User> users = userService.getUsers();
         User updated = users.stream()
                 .filter(user -> user.getId() == user1id)
                 .findFirst()
@@ -139,9 +141,9 @@ class UserControllerTest {
 
     @Test
     void test_9ShouldReturnUsers() {
-        userController.createUser(user1);
-        userController.createUser(user2);
-        Collection<User> users = userController.getUsers();
+        userService.createUser(user1);
+        userService.createUser(user2);
+        Collection<User> users = userService.getUsers();
 
         assertEquals(2, users.size());
     }

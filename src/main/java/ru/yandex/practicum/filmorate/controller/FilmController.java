@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -47,18 +46,12 @@ public class FilmController {
     @PutMapping("/films/{id}/like/{userId}")
     public Film addLike(@PathVariable("id") int id,
                         @PathVariable("userId") int userId) {
-        if (id <= 0 || userId <= 0) {
-            throw new ValidationException("id пользователя не может быть меньше значния <1>");
-        }
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/films/{id}/like/{userId}")
     public String deleteLikeById(@PathVariable("id") int id,
                                  @PathVariable("userId") int userId) {
-        if (id <= 0 || userId <= 0) {
-            throw new ValidationException("id пользователя не может быть меньше значния <1>");
-        }
         filmService.deleteLikeById(id, userId);
         return "<Like> Успешно удален";
     }

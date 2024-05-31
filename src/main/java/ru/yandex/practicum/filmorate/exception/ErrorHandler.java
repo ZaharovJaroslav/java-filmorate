@@ -23,5 +23,11 @@ public class ErrorHandler {
     public ErrorResponse handleNotFoundException(final NotFoundException e) {
         return new ErrorResponse("Не найдено", e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handlerServerError(final Throwable e) {
+        return new ErrorResponse("Ошибка обработки запроса на сервере", e.getMessage());
+    }
 }
 

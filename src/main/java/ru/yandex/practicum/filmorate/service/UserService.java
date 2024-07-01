@@ -2,137 +2,173 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ObjectAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.NotContentException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.storage.db.friendship.FriendshipDao;
+import ru.yandex.practicum.filmorate.storage.db.user.UserDbStorage;
+import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class UserService {
-     private final UserStorage userStorage;
-
+public class  UserService {
+    private final UserStorage userStorage;
+    private final FriendshipDao friendshipDao;
 
     @Autowired
-    public UserService() {
-        this.userStorage = new InMemoryUserStorage();
+    public UserService(@Qualifier("UserDbStorage") UserDbStorage userStorage,
+                         FriendshipDao friendshipDao) {
+        this.userStorage = userStorage;
+        this.friendshipDao = friendshipDao;
     }
 
+
     public User createUser(User user) {
-      return userStorage.createUser(user);
+        log.debug("createUser");
+        if (userStorage.isContains(user.getId())) {
+            throw new ObjectAlreadyExistsException("Пользователь с id = " + user.getId() +  "уже существует");
+        }
+        User newUser =  validationUser(user);
+        return userStorage.createUser(newUser);
     }
 
     public User updateUser(User user) {
-        return userStorage.updateUser(user);
+        log.debug("updateUser");
+        if (!userStorage.isContains(user.getId())) {
+            throw new NotFoundException("Пользователь с id = " + user.getId() +  "не существует");
+        }
+        User updateUser = validationUser(user);
+        return userStorage.updateUser(updateUser);
     }
 
     public void deleteUserById(int id) {
+        log.debug("getGenreById({})", id);
+        if (userStorage.isContains(id)) {
+            throw new NotFoundException("Пользователь с id = " + id +  "не существует");
+        }
         userStorage.deleteUserById(id);
     }
 
     public Collection<User> getUsers() {
+        log.debug("getUsers()");
         return userStorage.getUsers();
     }
 
-    public User addFriend(int userId, int newFriendId) {
-        log.info("Добавление пользовтеля в друзья");
-        User user = userSearchById(userId);
-        User newFriend = userSearchById(newFriendId);
-
-        if (user.getFriends().contains(newFriendId) && newFriend.getFriends().contains(userId)) {
-            throw new ValidationException("У пользователя уже есть дргу с таким id");
+    public User getUserById(int userId) {
+        log.debug("getGenreById({})", userId);
+        if (userId <= 0) {
+            throw new ValidationException("id пользователя не может быть меньше значния <1>");
         }
-        user.getFriends().add(newFriendId);
-        newFriend.getFriends().add(userId);
-        log.info("Пользовтель <{}> добавил в друзья пользователя <{}>", user.getName(), newFriend.getName());
+        if (!userStorage.isContains(userId)) {
+            throw new NotFoundException("Пользователь с id = " + userId +  "не существует");
+        }
 
+        return userStorage.getUsers()
+                .stream()
+                .filter(user -> user.getId() == userId)
+                .findFirst()
+                .orElseThrow(() -> new  NotFoundException("пользователь с id = " + userId + "не найден"));
+    }
+
+    public User validationUser(User user) {
+        log.debug("validationUser");
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            log.warn("Ошибка валидации: email {}", user.getEmail());
+            throw new ValidationException("электронная почта не может быть пустой и должна содержать символ <@>");
+        }
+        if (user.getLogin() != null && !user.getLogin().isBlank()) {
+            String login = user.getLogin();
+            for (int i = 0; i < login.length(); i++) {
+                char ch = login.charAt(i);
+                if (Character.isWhitespace(ch)) {
+                    log.warn("Ошибка валидации: login {}", user.getEmail());
+                    throw new ValidationException("огин не может содержать пробел");
+                }
+            }
+        } else {
+            log.warn("Ошибка валидации: login {}", user.getEmail());
+            throw new ValidationException("логин не может быть пустым и содержать пробелы");
+        }
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        if (user.getBirthday() == null || user.getBirthday().isAfter(LocalDate.now())) {
+            log.warn("Ошибка валидации: birthday {}", user.getBirthday());
+            throw new ValidationException("дата рождения не может быть пустым, а так же не может быть в будущем");
+        }
         return user;
     }
 
-    public User deleteFromFriends(int userId, int userToDeleteId) {
-        log.info("Удаление пользователя из списка друзей");
-        User user = userSearchById(userId);
-        User userToDelete = userSearchById(userToDeleteId);
 
-        user.getFriends().remove(userToDeleteId);
-        userToDelete.getFriends().remove(userId);
-        log.info("Пользователь <{}> удалил из друзей пользователя <{}>", user.getName(), userToDelete.getName());
+    public void addFriend(int userId, int newFriendId) {
+        log.debug("addFriend({}, {})",userId, newFriendId);
+        log.info("Добавление пользовтеля в друзья");
+        validationUserId(userId,newFriendId);
+        if (friendshipDao.isFriend(userId, newFriendId)) {
+            throw new ValidationException("Пользователь с id = userId1  и userId2 уже дружат");
+        }
+        boolean isFriend = friendshipDao.isFriend(userId, newFriendId);
+        friendshipDao.addFriend(userId, newFriendId, isFriend);
+    }
 
-        return user;
+    public void deleteFromFriends(int userId, int userToDeleteId) {
+        log.debug("deleteFromFriends({}, {})",userId, userToDeleteId);
+        log.debug(" Удаление друга у пользователя {} удаляемый друг -{}", userId, userToDeleteId);
+
+        validationUserId(userId,userToDeleteId);
+        if (!friendshipDao.isFriend(userId, userToDeleteId)) {
+            throw new NotContentException("Пользователь с id = userId1  и userId2 не дружат");
+        }
+        friendshipDao.deleteFriend(userId,userToDeleteId);
     }
 
     public Collection<User> getMutualFriends(int userId, int friendId) {
-        log.info("Получение списка общих друзей пользователей");
+        log.debug("getMutualFriends({}, {})",userId, friendId);
         validationUserId(userId, friendId);
+        List<User> userFriends = getUsersFriends(userId);
+        List<User> friendFriends = getUsersFriends(friendId);
 
-        Collection<User> mutualFriends = new ArrayList<>();
-        User user = userSearchById(userId);
-        User friend = userSearchById(friendId);
-
-        if ((user.getFriends() == null || user.getFriends().isEmpty()) || (friend.getFriends() == null
-                                                                       || friend.getFriends().isEmpty())) {
-            throw new ValidationException("У пользователя нет друзей");
-        }
-
-        log.debug("Формирование списка c id общих друзей пользователей с id = {} и id = {}", user.getId(), friend.getId());
-        List<Integer> mutualFriendsId = user.getFriends()
-                .stream()
-                .filter(x -> friend.getFriends().contains(x))
-                .collect(ArrayList::new, List::add, List::addAll);
-
-        Collection<User> allUsers = userStorage.getUsers();
-        log.debug("Формирование списка общих друзей");
-        for (User us : allUsers) {
-            if (mutualFriendsId.contains(us.getId())) {
-                mutualFriends.add(us);
-            }
-        }
-        log.info("Список общих друзей пользователей <{}> и <{}> успешно сформирован,", user.getName(), friend.getName());
-        return mutualFriends;
+        return friendFriends.stream()
+                .filter(userFriends::contains)
+                .filter(friendFriends::contains)
+                .collect(Collectors.toList());
     }
 
-    public Collection<User> getUsersFriends(int userId) {
-        log.info("Получение всех друзей пользователя");
-        Collection<User> userFriends = new ArrayList<>();
-        User user = userSearchById(userId);
+    public List<User> getUsersFriends(int userId) {
+        log.debug("getUsersFriends");
 
-        Collection<User> allUsers = userStorage.getUsers();
-
-        log.debug("Формирование списка друзей пользователя с id = <{}>", user.getId());
-        for (User us : allUsers) {
-            if (user.getFriends().contains(us.getId()) && us.getFriends().contains(userId)) {
-                userFriends.add(us);
-            }
+        if (!userStorage.isContains(userId)) {
+            throw new NotFoundException("Пользователь с id = " + userId +  "не существует");
         }
-        log.info("Списко друзей пользователя <{}> успешно сформирован", user.getName());
-        return userFriends;
-    }
-
-    public User userSearchById(int userId) {
-            log.debug("Поиск пользоватлея с id = <{}>", userId);
-            if (userId <= 0) {
-                throw new ValidationException("id пользователя не может быть меньше значния <1>");
-            }
-
-            return userStorage.getUsers()
-                    .stream()
-                    .filter(user -> user.getId() == userId)
-                    .findFirst()
-                    .orElseThrow(() -> new  NotFoundException("пользователь с id = " + userId + "не найден"));
+        List<User> friends = friendshipDao.getFriends(userId).stream()
+                .mapToInt(Integer::valueOf)
+                .mapToObj(userStorage::getUserById)
+                .collect(Collectors.toList());
+        return friends;
     }
 
     public void validationUserId(int userId1, int userId2) {
-        log.debug("Валидация id пользвоателей userId1 = {}, userId2 = {}", userId1, userId2);
+        log.debug("validationUserId({}, {})",userId1, userId2);
+        log.debug("Валидация id пользвоателей  userId1 = {}, userId2 = {}", userId1, userId2);
         if (userId1 <= 0 || userId2 <= 0) {
             throw new ValidationException("id пользователя не может быть меньше значния <1>");
         }
         if (userId1 == userId2) {
             throw new ValidationException("id пользоватлей не могут быть одинаковыми");
         }
-        log.debug("Валидация прошла успешно");
+        if (!userStorage.isContains(userId1)) {
+            throw new NotFoundException("Пользователь с id = " + userId1 +  "не существует");
+        }
+        if (!userStorage.isContains(userId2)) {
+            throw new NotFoundException("Пользователь с id = " + userId2 +  "не существует");
+        }
     }
 }

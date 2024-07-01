@@ -1,0 +1,96 @@
+package ru.yandex.practicum.filmorate.storage.db.user;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.mapper.UserMapper;
+
+import java.sql.Date;
+import java.util.Collection;
+
+@Slf4j
+@Component("UserDbStorage")
+@RequiredArgsConstructor
+public class UserDbStorage implements UserStorage {
+    private final JdbcTemplate jdbcTemplate;
+
+    @Override
+    public User createUser(User user) {
+        log.debug("createUser({})", user);
+        jdbcTemplate.update("INSERT INTO users (email, login, name, birthday) "
+                        + "VALUES (?, ?, ?, ?)",
+                user.getEmail(),
+                user.getLogin(),
+                user.getName(),
+                Date.valueOf(user.getBirthday()));
+        User thisUser = jdbcTemplate.queryForObject(
+                "SELECT user_id, email, login, name, birthday "
+                        + "FROM users "
+                        + "WHERE email=?", new UserMapper(), user.getEmail());
+        log.trace("{} пользователь был добавлен в базу данных", thisUser);
+        return thisUser;
+    }
+
+
+    @Override
+    public User updateUser(User user) {
+        log.debug("updateUser({})", user);
+        jdbcTemplate.update("UPDATE users "
+                        + "SET email=?, login=?, name=?, birthday=? "
+                        + "WHERE user_id=?",
+                user.getEmail(),
+                user.getLogin(),
+                user.getName(),
+                Date.valueOf(user.getBirthday()),
+                user.getId());
+        User thisUser = getUserById(user.getId());
+        log.trace("Имя пользователя {} было обновлено в базе данных", thisUser);
+        return thisUser;
+    }
+
+    @Override
+    public void deleteUserById(int id) {
+        log.debug("deleteUserById({})", id);
+        jdbcTemplate.update("DELETE FROM users WHERE user_id=?", id);
+       if (!isContains(id)) {
+           log.trace("Пользователь с id = {} удален",id);
+       } else
+           log.debug("Не удалось удалить пользователся с id = {}", id);
+    }
+
+    @Override
+    public Collection<User> getUsers() {
+        log.debug("getUsers()");
+        Collection<User> users = jdbcTemplate.query(
+                "SELECT user_id, email, login, name, birthday FROM users ",
+                new UserMapper());
+        log.trace("Это пользователи в базе данных: : {}", users);
+        return  users;
+    }
+
+    @Override
+    public User getUserById(int id) {
+        log.debug("getUserById({})", id);
+        User thisUser = jdbcTemplate.queryForObject(
+                "SELECT user_id, email, login, name, birthday FROM users "
+                        + "WHERE user_id=?", new UserMapper(), id);
+        log.trace("Пользователь {} был возвращен", thisUser);
+        return thisUser;
+    }
+
+    @Override
+    public boolean isContains(int id) {
+        log.debug("isContains({})", id);
+        try {
+            getUserById(id);
+            log.trace("The user with id {} was found", id);
+            return true;
+        } catch (EmptyResultDataAccessException exception) {
+            log.trace("Не было найдено никакой информации о пользователе с идентификатором {}", id);
+            return false;
+        }
+    }
+}

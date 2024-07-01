@@ -20,6 +20,11 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/users")
+    public Collection<User> getUsers() {
+        return userService.getUsers();
+    }
+
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody User user) {
@@ -37,44 +42,39 @@ public class UserController {
         return userService.updateUser(user);
     }
 
-    @GetMapping("/users")
-    public Collection<User> getUsers() {
-        return userService.getUsers();
-    }
-
     @GetMapping("/users/{id}")
     public User getUserById(@PathVariable("id") int id) {
-        return userService.userSearchById(id);
+        return userService.getUserById(id);
     }
 
     @DeleteMapping("/users/{id}")
-    public String deleteUserById(@PathVariable("id") int id) {
+    public void deleteUserById(@PathVariable("id") int id) {
         userService.deleteUserById(id);
-        return "Пользователь успешно удален";
-
     }
 
     @PutMapping("/users/{id}/friends/{friendId}")
-    public User addFriend(@PathVariable("id") int id,
+    public void addFriend(@PathVariable("id") int id,
                           @PathVariable("friendId") int friendId) {
-        return userService.addFriend(id, friendId);
+        userService.addFriend(id, friendId);
     }
 
+
     @DeleteMapping("users/{id}/friends/{friendId}")
-    public User deleteFromFriends(@PathVariable("id") int id,
+    public void deleteFromFriends(@PathVariable("id") int id,
                                   @PathVariable("friendId") int friendId) {
-        return userService.deleteFromFriends(id, friendId);
+        userService.deleteFromFriends(id, friendId);
     }
 
     @GetMapping("/users/{id}/friends/common/{otherId}")
     public Collection<User> getMutualFriends(@PathVariable("id") int id,
                                              @PathVariable("otherId") int otherId) {
-        return userService.getMutualFriends(id,otherId);
+        return userService.getMutualFriends(id, otherId);
     }
 
     @GetMapping("/users/{id}/friends")
     public Collection<User> getUsersFriends(@PathVariable("id") int id) {
         return userService.getUsersFriends(id);
     }
-
 }
+
+

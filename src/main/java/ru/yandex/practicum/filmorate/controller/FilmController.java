@@ -1,3 +1,4 @@
+
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
@@ -6,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.*;
@@ -30,6 +32,11 @@ public class FilmController {
         return filmService.addFilm(film);
     }
 
+    @GetMapping("/films/{id}")
+    public Film getFilmById(@PathVariable int id) {
+        return filmService.getFilmById(id);
+    }
+
     @PutMapping("/films")
     public Film updateFilm(@RequestBody Film film) {
         if (film == null) {
@@ -44,24 +51,29 @@ public class FilmController {
     }
 
     @PutMapping("/films/{id}/like/{userId}")
-    public Film addLike(@PathVariable("id") int id,
+    public void addLike(@PathVariable("id") int id,
                         @PathVariable("userId") int userId) {
-        return filmService.addLike(id, userId);
+        filmService.addLike(id, userId);
     }
 
-    @DeleteMapping("/films/{id}/like/{userId}")
-    public String deleteLikeById(@PathVariable("id") int id,
-                                 @PathVariable("userId") int userId) {
-        filmService.deleteLikeById(id, userId);
-        return "<Like> Успешно удален";
-    }
 
     @GetMapping("/films/popular")
     public Collection<Film> getPopularMoviesByLikes(@RequestParam(name = "count", required = false) String count) {
         if (count.isBlank()) {
-            return filmService.getPopularMoviesByLikes(0);
+            return filmService.getPopularMoviesByLikes(10);
         }
         return filmService.getPopularMoviesByLikes(Integer.parseInt(count));
     }
 
+    @GetMapping("/films/id")
+    Collection<Genre> getGenresFilm(@PathVariable int id) {
+        return filmService.getGenresFilm(id);
+    }
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public void removeLike(@PathVariable int id, @PathVariable int userId) {
+        filmService.dislike(id, userId);
+    }
+
 }
+

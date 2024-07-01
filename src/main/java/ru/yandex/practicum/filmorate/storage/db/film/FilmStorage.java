@@ -1,0 +1,36 @@
+package ru.yandex.practicum.filmorate.storage.db.film;
+
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+
+import java.time.LocalDate;
+import java.time.Month;
+import java.util.Collection;
+import java.util.List;
+
+public interface FilmStorage {
+    int DESCRIPTION_LENGTH = 200;
+    LocalDate MOVIE_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER,28);
+
+    Film addFilm(Film film);
+
+    Film updateFilm(Film film);
+
+    void deleteFilmById(int id);
+
+    Film getFilmById(int filmId);
+
+    Collection<Film> getFilms();
+
+    boolean isContains(int id);
+
+    void addGenres(int filmId, List<Genre> genres);
+
+    void updateGenres(int filmId, List<Genre> genres);
+
+    List<Genre> getGenres(int filmId);
+
+    void deleteGenres(int filmId);
+
+
+}

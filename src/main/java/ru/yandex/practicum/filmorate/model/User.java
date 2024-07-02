@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
+
 
 import java.time.LocalDate;
 
@@ -13,7 +13,6 @@ import java.time.LocalDate;
 public class User {
     private int id;
     private String email;
-    @NonNull
     private String login;
     private String name;
     private LocalDate birthday;

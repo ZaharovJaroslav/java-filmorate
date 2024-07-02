@@ -41,6 +41,23 @@ public class FilmDbStorage implements FilmStorage {
         return thisFilm;
     }
 
+    public Optional<Film> checkForRepeat(Film film) {
+        try {
+            Film thisFilm = jdbcTemplate.queryForObject(
+                    "SELECT film_id, name, description, release_date, duration, mpa_id FROM films WHERE name=? "
+                            + "AND description=? AND release_date=? AND duration=? AND mpa_id=?",
+                    new FilmMapper(), film.getName(),
+                    film.getDescription(),
+                    Date.valueOf(film.getReleaseDate()),
+                    film.getDuration(),
+                    film.getMpa().getId());
+            return Optional.ofNullable(thisFilm);
+
+        } catch (EmptyResultDataAccessException ignored) {
+            return Optional.empty();
+        }
+    }
+
     @Override
     public Film updateFilm(Film film) {
         log.debug("updateFilm({}).", film);
@@ -65,10 +82,6 @@ public class FilmDbStorage implements FilmStorage {
                 new FilmMapper(), filmId);
         log.trace("Фильм {} был возвращен", thisFilm);
         return thisFilm;
-    }
-
-    @Override
-    public void deleteFilmById(int id) {
     }
 
     @Override

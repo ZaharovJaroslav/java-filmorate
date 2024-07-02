@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ObjectAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -45,17 +44,25 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.debug("addFilm");
+        log.debug("updateFilm({})",film);
         checkIfExists(film);
         validationFilm(film);
-        Film thisFilm = filmStorage.addFilm(film);
-        filmStorage.addGenres(thisFilm.getId(), film.getGenres());
-        thisFilm.setGenres(filmStorage.getGenres(thisFilm.getId()));
-        thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
-        return thisFilm;
+        Set<Genre> genres = new HashSet<>(film.getGenres());
+
+        Optional<Film> thisFilm = filmStorage.checkForRepeat(film);
+        if (thisFilm.isPresent()) {
+            Film filmUpdated = thisFilm.get();
+            filmStorage.updateGenres(filmUpdated.getId(),genres.stream().toList());
+            filmUpdated.setGenres(filmStorage.getGenres(filmUpdated.getId()));
+            return filmUpdated;
+        } else {
+            Film newFilm = filmStorage.addFilm(film);
+            filmStorage.addGenres(newFilm.getId(),genres.stream().toList());
+            newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
+            newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
+            return newFilm;
+        }
     }
-
-
 
     public Film updateFilm(Film film) {
         log.debug("updateFilm");
@@ -68,21 +75,17 @@ public class FilmService {
         return thisFilm;
     }
 
-   public Film getFilmById(int filmId) {
-       log.debug("getFilmById");
-       if (!filmStorage.isContains(filmId)) {
+    public Film getFilmById(int filmId) {
+        log.debug("getFilmById");
+        if (!filmStorage.isContains(filmId)) {
             throw new NotFoundException("Не удается найти фильм с идентификатором");
         }
-       Film film = filmStorage.getFilmById(filmId);
-       List<Genre> genres = filmStorage.getGenres(filmId);
-       if (genres.isEmpty()) {
-            film.setGenres(genres);
-        } else
-            film.setGenres(genres.stream().distinct().toList());
-       film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
-       return film;
+        Film film = filmStorage.getFilmById(filmId);
+        Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
+        film.setGenres(genres.stream().toList());
+        film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+        return film;
     }
-
 
     public Collection<Film> getFilms() {
         log.debug("getFilms");
@@ -106,12 +109,6 @@ public class FilmService {
 
     private int compare(Film film, Film otherFilm) {
         return Integer.compare(likeDao.countLikes(otherFilm.getId()), likeDao.countLikes(film.getId()));
-    }
-
-
-    public void deleteFilmById(int id) {
-        log.debug("deleteFilmById({})", id);
-        filmStorage.deleteFilmById(id);
     }
 
     public void addLike(int filmId, int userId) {
@@ -144,7 +141,6 @@ public class FilmService {
 
     public void validationFilm(Film film) {
         log.debug("validationFilm");
-
         if (film.getName() == null || film.getName().isBlank()) {
             log.warn("Ошибка валидации: название фильма - <{}>", film.getName());
             throw new ValidationException("Название не может быть пустым");
@@ -183,9 +179,9 @@ public class FilmService {
 
     private void checkIfExists(Film film) {
         log.debug("checkIfExists");
-            if (filmStorage.isContains(film.getId())) {
-                throw new ObjectAlreadyExistsException("Фильм с идентификатором " + film.getId() + "уже существует");
-            }
+        if (filmStorage.isContains(film.getId())) {
+            throw new ValidationException("Фильм с идентификатором " + film.getId() + "уже существует");
+        }
         if (!mpaDao.isContains(film.getMpa().getId())) {
             throw new ValidationException("Не найден MPA для фильма с идентификатором" + film.getId());
         }

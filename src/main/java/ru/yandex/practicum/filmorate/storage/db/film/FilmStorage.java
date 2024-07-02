@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface FilmStorage {
     int DESCRIPTION_LENGTH = 200;
@@ -15,8 +16,6 @@ public interface FilmStorage {
     Film addFilm(Film film);
 
     Film updateFilm(Film film);
-
-    void deleteFilmById(int id);
 
     Film getFilmById(int filmId);
 
@@ -32,5 +31,5 @@ public interface FilmStorage {
 
     void deleteGenres(int filmId);
 
-
+    Optional<Film> checkForRepeat(Film film);
 }

@@ -16,5 +16,3 @@ INSERT INTO genre (genre_type) VALUES ('Мультфильм');
 INSERT INTO genre (genre_type) VALUES ('Триллер');
 INSERT INTO genre (genre_type) VALUES ('Документальный');
 INSERT INTO genre (genre_type) VALUES ('Боевик');
-
-

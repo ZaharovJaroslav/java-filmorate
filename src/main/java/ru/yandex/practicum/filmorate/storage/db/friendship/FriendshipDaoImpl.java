@@ -49,7 +49,6 @@ public class FriendshipDaoImpl implements FriendshipDao {
                 .stream()
                 .map(Friendship::getFriendId)
                 .collect(Collectors.toList());
-        log.trace("Был возвращен статус дружбы для: {}", userId, friendsList);
         return friendsList;
     }
 

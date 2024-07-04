@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.db.user;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public interface UserStorage {
     User createUser(User user);
@@ -13,8 +14,8 @@ public interface UserStorage {
 
     Collection<User> getUsers();
 
-    User getUserById(int id);
+    Optional<User> getUserById(int id);
 
-    boolean isContains(int id);
+    void checkNotExsistUser(int userId);
 
 }

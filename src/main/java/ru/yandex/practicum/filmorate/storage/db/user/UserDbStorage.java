@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.storage.mapper.UserMapper;
 
 import java.sql.Date;
 import java.util.Collection;
+import java.util.Optional;
 
 @Slf4j
 @Component("UserDbStorage")
@@ -46,16 +47,21 @@ public class UserDbStorage implements UserStorage {
                 user.getName(),
                 Date.valueOf(user.getBirthday()),
                 user.getId());
-        User thisUser = getUserById(user.getId());
-        log.trace("Имя пользователя {} было обновлено в базе данных", thisUser);
-        return thisUser;
+        Optional<User> thisUser = getUserById(user.getId());
+        if (thisUser.isPresent()) {
+            log.trace("Имя пользователя {} было обновлено в базе данных", thisUser);
+            return thisUser.get();
+        } else
+            log.trace("не удалось обноыить пользователя с id {}", user.getId());
+        return user;
     }
 
     @Override
     public void deleteUserById(int id) {
         log.debug("deleteUserById({})", id);
         jdbcTemplate.update("DELETE FROM users WHERE user_id=?", id);
-       if (!isContains(id)) {
+
+       if (getUserById(id).isPresent()) {
            log.trace("Пользователь с id = {} удален",id);
        } else
            log.debug("Не удалось удалить пользователся с id = {}", id);
@@ -72,25 +78,22 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(int id) {
+    public Optional<User> getUserById(int id) {
         log.debug("getUserById({})", id);
-        User thisUser = jdbcTemplate.queryForObject(
-                "SELECT user_id, email, login, name, birthday FROM users "
-                        + "WHERE user_id=?", new UserMapper(), id);
-        log.trace("Пользователь {} был возвращен", thisUser);
-        return thisUser;
+        try {
+            User thisUser = jdbcTemplate.queryForObject(
+                    "SELECT user_id, email, login, name, birthday FROM users "
+                            + "WHERE user_id=?", new UserMapper(), id);
+            log.trace("Пользователь {} был возвращен", thisUser);
+            return Optional.ofNullable(thisUser);
+
+        } catch (EmptyResultDataAccessException ignored) {
+            return Optional.empty();
+        }
     }
 
     @Override
-    public boolean isContains(int id) {
-        log.debug("isContains({})", id);
-        try {
-            getUserById(id);
-            log.trace("The user with id {} was found", id);
-            return true;
-        } catch (EmptyResultDataAccessException exception) {
-            log.trace("Не было найдено никакой информации о пользователе с идентификатором {}", id);
-            return false;
-        }
+    public void checkNotExsistUser(int userId) {
+
     }
 }

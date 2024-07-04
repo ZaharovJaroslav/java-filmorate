@@ -44,7 +44,7 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.debug("updateFilm({})",film);
+        log.debug("addFilm(({})",film);
         checkIfExists(film);
         validationFilm(film);
         Set<Genre> genres = new HashSet<>(film.getGenres());
@@ -66,7 +66,7 @@ public class FilmService {
 
     public Film updateFilm(Film film) {
         log.debug("updateFilm");
-        checkIfNotExists(film);
+        checkIfExists(film);
         validationFilm(film);
         Film thisFilm = filmStorage.updateFilm(film);
         filmStorage.updateGenres(thisFilm.getId(), film.getGenres());
@@ -77,9 +77,6 @@ public class FilmService {
 
     public Film getFilmById(int filmId) {
         log.debug("getFilmById");
-        if (!filmStorage.isContains(filmId)) {
-            throw new NotFoundException("Не удается найти фильм с идентификатором");
-        }
         Film film = filmStorage.getFilmById(filmId);
         Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
         film.setGenres(genres.stream().toList());
@@ -95,6 +92,12 @@ public class FilmService {
             film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
         }
         return films;
+    }
+
+    public List<Genre> getGenresFilm(int filmId) {
+        log.debug("getGenresFilm");
+        filmStorage.getFilmById(filmId);
+        return filmStorage.getGenres(filmId);
     }
 
     public Collection<Film> getPopularMoviesByLikes(int count) {
@@ -131,12 +134,8 @@ public class FilmService {
 
     private void likeChecker(int filmId, int userId) {
         log.debug("likeChecker({}, {})", filmId, userId);
-        if (!filmStorage.isContains(filmId)) {
-            throw new NotFoundException("Не удается найти фильм с идентификатором " + filmId);
-        }
-        if (!userStorage.isContains(userId)) {
-            throw new NotFoundException("Не удается найти пользователя с идентификатором " + filmId);
-        }
+        filmStorage.getFilmById(filmId);
+        userStorage.checkNotExsistUser(userId);
     }
 
     public void validationFilm(Film film) {
@@ -161,27 +160,8 @@ public class FilmService {
         }
     }
 
-    private void checkIfNotExists(Film film) {
-        log.debug("checkIfNotExists({})", film);
-        if (!filmStorage.isContains(film.getId())) {
-            throw new NotFoundException("Фильм с идентификатором " + film.getId() + " не был найден");
-        }
-
-        if (!mpaDao.isContains(film.getMpa().getId())) {
-            throw new NotFoundException("Не найден MPA для фильма с идентификатором" + film.getId());
-        }
-        for (Genre genre : film.getGenres()) {
-            if (!genreDao.isContains(genre.getId())) {
-                throw new NotFoundException("Не удается найти жанр фильма с идентификатором " + film.getId());
-            }
-        }
-    }
-
     private void checkIfExists(Film film) {
         log.debug("checkIfExists");
-        if (filmStorage.isContains(film.getId())) {
-            throw new ValidationException("Фильм с идентификатором " + film.getId() + "уже существует");
-        }
         if (!mpaDao.isContains(film.getMpa().getId())) {
             throw new ValidationException("Не найден MPA для фильма с идентификатором" + film.getId());
         }
@@ -190,15 +170,5 @@ public class FilmService {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
         }
-    }
-
-    public List<Genre> getGenresFilm(int filmId) {
-        log.debug("getGenresFilm");
-        if (!filmStorage.isContains(filmId)) {
-            throw new NotFoundException("Фильм c id " + filmId + " не найден");
-        }
-        return filmStorage.getGenres(filmId);
-
-
     }
 }

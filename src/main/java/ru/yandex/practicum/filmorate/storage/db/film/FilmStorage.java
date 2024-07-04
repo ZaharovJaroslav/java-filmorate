@@ -21,8 +21,6 @@ public interface FilmStorage {
 
     Collection<Film> getFilms();
 
-    boolean isContains(int id);
-
     void addGenres(int filmId, List<Genre> genres);
 
     void updateGenres(int filmId, List<Genre> genres);

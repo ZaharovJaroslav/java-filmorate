@@ -30,31 +30,29 @@ public class  UserService {
         this.friendshipDao = friendshipDao;
     }
 
-
     public User createUser(User user) {
         log.debug("createUser");
-        if (userStorage.isContains(user.getId())) {
+        Optional<User> thisUser = userStorage.getUserById(user.getId());
+        if (thisUser.isEmpty()) {
+            User newUser =  validationUser(user);
+            return userStorage.createUser(newUser);
+        } else
             throw new ObjectAlreadyExistsException("Пользователь с id = " + user.getId() +  "уже существует");
-        }
-        User newUser =  validationUser(user);
-        return userStorage.createUser(newUser);
     }
 
     public User updateUser(User user) {
         log.debug("updateUser");
-        if (!userStorage.isContains(user.getId())) {
-            throw new NotFoundException("Пользователь с id = " + user.getId() +  "не существует");
-        }
-        User updateUser = validationUser(user);
-        return userStorage.updateUser(updateUser);
+        checkNotExsistUser(user.getId());
+        User userToUpdate = validationUser(user);
+
+        return userStorage.updateUser(userToUpdate);
+
     }
 
-    public void deleteUserById(int id) {
-        log.debug("getGenreById({})", id);
-        if (userStorage.isContains(id)) {
-            throw new NotFoundException("Пользователь с id = " + id +  "не существует");
-        }
-        userStorage.deleteUserById(id);
+    public void deleteUserById(int userId) {
+        log.debug("getGenreById({})", userId);
+        checkNotExsistUser(userId);
+        userStorage.deleteUserById(userId);
     }
 
     public Collection<User> getUsers() {
@@ -67,15 +65,12 @@ public class  UserService {
         if (userId <= 0) {
             throw new ValidationException("id пользователя не может быть меньше значния <1>");
         }
-        if (!userStorage.isContains(userId)) {
-            throw new NotFoundException("Пользователь с id = " + userId +  "не существует");
-        }
+        Optional<User> thisUser = userStorage.getUserById(userId);
+        if (thisUser.isPresent()) {
+            return thisUser.get();
+        } else
+            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
 
-        return userStorage.getUsers()
-                .stream()
-                .filter(user -> user.getId() == userId)
-                .findFirst()
-                .orElseThrow(() -> new  NotFoundException("пользователь с id = " + userId + "не найден"));
     }
 
     public User validationUser(User user) {
@@ -90,7 +85,7 @@ public class  UserService {
                 char ch = login.charAt(i);
                 if (Character.isWhitespace(ch)) {
                     log.warn("Ошибка валидации: login {}", user.getEmail());
-                    throw new ValidationException("огин не может содержать пробел");
+                    throw new ValidationException("логин не может содержать пробел");
                 }
             }
         } else {
@@ -110,20 +105,23 @@ public class  UserService {
 
     public void addFriend(int userId, int newFriendId) {
         log.debug("addFriend({}, {})",userId, newFriendId);
-        log.info("Добавление пользовтеля в друзья");
+        checkNotExsistUser(userId);
+        checkNotExsistUser(newFriendId);
         validationUserId(userId,newFriendId);
-        if (friendshipDao.isFriend(userId, newFriendId)) {
-            throw new ValidationException("Пользователь с id = userId1  и userId2 уже дружат");
-        }
+
         boolean isFriend = friendshipDao.isFriend(userId, newFriendId);
-        friendshipDao.addFriend(userId, newFriendId, isFriend);
+        if (isFriend) {
+            throw new ValidationException("Пользователь с id = userId1  и userId2 уже дружат");
+        } else
+            friendshipDao.addFriend(userId, newFriendId, isFriend);
     }
 
     public void deleteFromFriends(int userId, int userToDeleteId) {
         log.debug("deleteFromFriends({}, {})",userId, userToDeleteId);
-        log.debug(" Удаление друга у пользователя {} удаляемый друг -{}", userId, userToDeleteId);
-
         validationUserId(userId,userToDeleteId);
+        checkNotExsistUser(userId);
+        checkNotExsistUser(userToDeleteId);
+
         if (!friendshipDao.isFriend(userId, userToDeleteId)) {
             throw new NotContentException("Пользователь с id = userId1  и userId2 не дружат");
         }
@@ -144,13 +142,12 @@ public class  UserService {
 
     public List<User> getUsersFriends(int userId) {
         log.debug("getUsersFriends");
+        checkNotExsistUser(userId);
 
-        if (!userStorage.isContains(userId)) {
-            throw new NotFoundException("Пользователь с id = " + userId +  "не существует");
-        }
         List<User> friends = friendshipDao.getFriends(userId).stream()
                 .mapToInt(Integer::valueOf)
                 .mapToObj(userStorage::getUserById)
+                .flatMap(Optional::stream)
                 .collect(Collectors.toList());
         return friends;
     }
@@ -164,11 +161,12 @@ public class  UserService {
         if (userId1 == userId2) {
             throw new ValidationException("id пользоватлей не могут быть одинаковыми");
         }
-        if (!userStorage.isContains(userId1)) {
-            throw new NotFoundException("Пользователь с id = " + userId1 +  "не существует");
-        }
-        if (!userStorage.isContains(userId2)) {
-            throw new NotFoundException("Пользователь с id = " + userId2 +  "не существует");
+    }
+
+    public void checkNotExsistUser(int userId) {
+        Optional<User> thisUser = userStorage.getUserById(userId);
+        if (thisUser.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
     }
 }

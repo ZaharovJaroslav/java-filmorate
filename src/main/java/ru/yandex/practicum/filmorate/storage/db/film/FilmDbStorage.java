@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmMapper;
@@ -77,12 +78,19 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film getFilmById(int filmId) {
         log.debug("getFilmById({})", filmId);
-        Film thisFilm = jdbcTemplate.queryForObject(
-                "SELECT film_id, name, description, release_date, duration, mpa_id FROM films WHERE film_id=?",
-                new FilmMapper(), filmId);
-        log.trace("Фильм {} был возвращен", thisFilm);
-        return thisFilm;
+        try {
+            Film thisFilm = jdbcTemplate.queryForObject(
+                    "SELECT film_id, name, description, release_date, duration, mpa_id FROM films WHERE film_id=?",
+                    new FilmMapper(), filmId);
+            log.trace("Фильм {} был возвращен", thisFilm);
+            return thisFilm;
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Фильм с таким id не существует");
+        }
     }
+
+
+
 
     @Override
     public Collection<Film> getFilms() {
@@ -91,19 +99,6 @@ public class FilmDbStorage implements FilmStorage {
                 "SELECT film_id, name, description, release_date, duration, mpa_id FROM films", new FilmMapper());
         log.trace("В базе данных есть фильмы: {}", films);
         return films;
-    }
-
-    @Override
-    public boolean isContains(int id) {
-        log.debug("isContains({})", id);
-        try {
-            getFilmById(id);
-            log.trace("Найден фильм с идентификатором {}", id);
-            return true;
-        } catch (EmptyResultDataAccessException exception) {
-            log.trace("Не найдено никакой информации по идентификатору {}", id);
-            return false;
-        }
     }
 
     @Override

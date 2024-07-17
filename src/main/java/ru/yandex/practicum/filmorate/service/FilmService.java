@@ -49,7 +49,7 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.debug("addFilm(({})",film);
+        log.debug("addFilm(({})", film);
         checkIfExists(film);
         validationFilm(film);
         Set<Genre> genres = new HashSet<>(film.getGenres());
@@ -57,12 +57,12 @@ public class FilmService {
         Optional<Film> thisFilm = filmStorage.checkForRepeat(film);
         if (thisFilm.isPresent()) {
             Film filmUpdated = thisFilm.get();
-            filmStorage.updateGenres(filmUpdated.getId(),genres.stream().toList());
+            filmStorage.updateGenres(filmUpdated.getId(), genres.stream().toList());
             filmUpdated.setGenres(filmStorage.getGenres(filmUpdated.getId()));
             return filmUpdated;
         } else {
             Film newFilm = filmStorage.addFilm(film);
-            filmStorage.addGenres(newFilm.getId(),genres.stream().toList());
+            filmStorage.addGenres(newFilm.getId(), genres.stream().toList());
             newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
             newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
             newFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
@@ -127,7 +127,7 @@ public class FilmService {
         log.debug("addLike({}, {})", filmId, userId);
         likeChecker(filmId, userId);
         if (likeDao.isLiked(filmId, userId)) {
-            throw new  NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
+            throw new NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
         }
         likeDao.like(filmId, userId);
     }
@@ -139,12 +139,6 @@ public class FilmService {
             throw new NotFoundException("Пользователю с идентификатором " + userId + " не понравился фильм" + filmId);
         }
         likeDao.dislike(filmId, userId);
-    }
-
-    private void likeChecker(int filmId, int userId) {
-        log.debug("likeChecker({}, {})", filmId, userId);
-        filmStorage.getFilmById(filmId);
-        userStorage.checkNotExsistUser(userId);
     }
 
     public void validationFilm(Film film) {
@@ -167,6 +161,26 @@ public class FilmService {
             throw new ValidationException("Продолжительность фильма должна быть положительным числом " +
                     "а так же не может быть меньше 1 секунды");
         }
+    }
+
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        List<Film> films = filmStorage.getFilmsByDirector(directorId);
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return films.stream()
+                    .sorted(Comparator.comparing(Film::getReleaseDate))
+                    .collect(Collectors.toList());
+        } else if ("likes".equalsIgnoreCase(sortBy)) {
+            return films.stream()
+                    .sorted((film1, film2) -> Integer.compare(likeDao.countLikes(film2.getId()), likeDao.countLikes(film1.getId())))
+                    .collect(Collectors.toList());
+        }
+        return films;
+    }
+
+    private void likeChecker(int filmId, int userId) {
+        log.debug("likeChecker({}, {})", filmId, userId);
+        filmStorage.getFilmById(filmId);
+        userStorage.checkNotExsistUser(userId);
     }
 
     private void checkIfExists(Film film) {

@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.db.directors.DirectorDao;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Service
 public class DirectorsService {
@@ -21,8 +22,8 @@ public class DirectorsService {
         return directorDao.getAllDirectors();
     }
 
-    public Director getDirectorById(long id) {
-        return directorDao.getDirectorById(id).orElseThrow(() -> new RuntimeException("Режисер не найден"));
+    public Optional<Director> getDirectorById(long id) {
+        return directorDao.getDirectorById(id);
     }
 
     public Director createDirector(Director director) {

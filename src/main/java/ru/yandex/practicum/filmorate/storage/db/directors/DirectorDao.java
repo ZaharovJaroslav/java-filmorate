@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.db.directors;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DirectorDao {
@@ -18,4 +19,6 @@ public interface DirectorDao {
     boolean deleteById(long id);
 
     boolean existsById(long id);
+
+    List<Director> getDirectorsByFilmId(long filmId);
 }

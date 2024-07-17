@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.db.Like.LikeDao;
+import ru.yandex.practicum.filmorate.storage.db.directors.DirectorDao;
 import ru.yandex.practicum.filmorate.storage.db.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.db.genre.GenreDao;
 import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
@@ -29,18 +31,21 @@ public class FilmService {
     private final GenreDao genreDao;
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
+    private final DirectorDao directorDao;
 
     @Autowired
     public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
                        @Qualifier("UserDbStorage") UserStorage userStorage,
                        GenreDao genreDao,
                        MpaDao mpaDao,
-                       LikeDao likeDao) {
+                       LikeDao likeDao,
+                       DirectorDao directorDao) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreDao = genreDao;
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
+        this.directorDao = directorDao;
     }
 
     public Film addFilm(Film film) {
@@ -60,6 +65,7 @@ public class FilmService {
             filmStorage.addGenres(newFilm.getId(),genres.stream().toList());
             newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
             newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
+            newFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
             return newFilm;
         }
     }
@@ -72,6 +78,7 @@ public class FilmService {
         filmStorage.updateGenres(thisFilm.getId(), film.getGenres());
         thisFilm.setGenres(filmStorage.getGenres(thisFilm.getId()));
         thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
+        thisFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
         return thisFilm;
     }
 
@@ -81,6 +88,7 @@ public class FilmService {
         Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
         film.setGenres(genres.stream().toList());
         film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+        setDirectorsForFilm(film);
         return film;
     }
 
@@ -90,6 +98,7 @@ public class FilmService {
         for (Film film : films) {
             film.setGenres(filmStorage.getGenres(film.getId()));
             film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+            setDirectorsForFilm(film);
         }
         return films;
     }
@@ -171,4 +180,20 @@ public class FilmService {
             }
         }
     }
+
+    private List<Director> getDirectorsByIds(List<Director> directors) {
+        List<Director> foundDirectors = new ArrayList<>();
+        for (Director director : directors) {
+            Director foundDirector = directorDao.getDirectorById(director.getId())
+                    .orElseThrow(() -> new NotFoundException("Режиссер с id=" + director.getId() + " не найден."));
+            foundDirectors.add(foundDirector);
+        }
+        return foundDirectors;
+    }
+
+    private void setDirectorsForFilm(Film film) {
+        List<Director> directors = directorDao.getDirectorsByFilmId(film.getId());
+        film.setDirectors(directors);
+    }
+
 }

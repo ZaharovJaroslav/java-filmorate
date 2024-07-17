@@ -75,5 +75,9 @@ public class FilmController {
         filmService.dislike(id, userId);
     }
 
+    @DeleteMapping("/films/{id}")
+    public void deleteFilmById(@PathVariable("id") int id) {
+        filmService.deleteFilmById(id);
+    }
 }
 

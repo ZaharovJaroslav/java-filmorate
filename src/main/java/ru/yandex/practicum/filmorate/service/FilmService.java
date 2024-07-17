@@ -78,7 +78,7 @@ public class FilmService {
     public Film getFilmById(int filmId) {
         log.debug("getFilmById");
         Optional<Film> film = filmStorage.getFilmById(filmId);
-        if(film.isPresent()) {
+        if (film.isPresent()) {
             Film thisFilm = film.get();
             Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
             thisFilm.setGenres(genres.stream().toList());

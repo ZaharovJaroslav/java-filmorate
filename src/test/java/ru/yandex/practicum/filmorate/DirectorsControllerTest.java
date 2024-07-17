@@ -30,6 +30,7 @@ class DirectorsControllerTest {
         jdbcTemplate.execute("DELETE FROM film_directors");
         jdbcTemplate.execute("DELETE FROM directors");
     }
+
     //добавление нового режиссера и проверяет, что режиссер был успешно добавлен
     @Test
     void createDirector_shouldAddDirector() {

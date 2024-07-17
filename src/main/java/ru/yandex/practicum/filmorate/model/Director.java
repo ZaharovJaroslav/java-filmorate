@@ -10,8 +10,4 @@ import lombok.NoArgsConstructor;
 public class Director {
     private long id;
     private String name;
-
-    public Director(long id){
-        this.id = id;
-    }
 }

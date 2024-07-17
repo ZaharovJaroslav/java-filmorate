@@ -27,7 +27,6 @@ public class Film {
     private List<Genre> genres = new ArrayList<>();
     private List<Director> directors = new ArrayList<>();
 
-
     public Film(String name, String description, LocalDate releaseDate, long duration) {
         this.name = name;
         this.description = description;

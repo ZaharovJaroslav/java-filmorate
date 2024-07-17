@@ -9,9 +9,11 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreMapper;
+import ru.yandex.practicum.filmorate.storage.mapper.MpaMapper;
 
 import java.sql.Date;
 import java.util.*;
@@ -157,5 +159,30 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("deleteGenres({})", filmId);
         jdbcTemplate.update("DELETE FROM film_genre WHERE film_id=?", filmId);
         log.trace("Все жанры были удалены для фильма с идентификатором {}", filmId);
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(long directorId) {
+        String sql = "SELECT f.* FROM films f JOIN film_directors fd ON f.film_id = fd.film_id WHERE fd.director_id = ?";
+        List<Film> films = jdbcTemplate.query(sql, new FilmMapper(), directorId);
+
+        for (Film film : films) {
+            // Получение MPA
+            String mpaSql = "SELECT * FROM film_mpa WHERE mpa_id = ?";
+            Mpa mpa = jdbcTemplate.queryForObject(mpaSql, new MpaMapper(), film.getMpa().getId());
+            film.setMpa(mpa);
+
+            // Получение жанров
+            String genresSql = "SELECT g.* FROM genre g JOIN film_genre fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
+            List<Genre> genres = jdbcTemplate.query(genresSql, new GenreMapper(), film.getId());
+            film.setGenres(genres);
+
+            // Получение режиссеров
+            String directorsSql = "SELECT d.* FROM directors d JOIN film_directors fd ON d.id = fd.director_id WHERE fd.film_id = ?";
+            List<Director> directors = jdbcTemplate.query(directorsSql, new DirectorMapper(), film.getId());
+            film.setDirectors(directors);
+        }
+
+        return films;
     }
 }

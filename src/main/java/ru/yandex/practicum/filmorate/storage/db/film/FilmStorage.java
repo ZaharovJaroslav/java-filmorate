@@ -30,4 +30,6 @@ public interface FilmStorage {
     void deleteGenres(int filmId);
 
     Optional<Film> checkForRepeat(Film film);
+
+    List<Film> getFilmsByDirector(long directorId);
 }

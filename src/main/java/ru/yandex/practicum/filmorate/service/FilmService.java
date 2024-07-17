@@ -177,6 +177,10 @@ public class FilmService {
         return films;
     }
 
+    public List<Film> searchFilms(String query, String[] by) {
+        return filmStorage.searchFilms(query, by);
+    }
+
     private void likeChecker(int filmId, int userId) {
         log.debug("likeChecker({}, {})", filmId, userId);
         filmStorage.getFilmById(filmId);

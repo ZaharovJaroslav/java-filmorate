@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * Film.
  */
@@ -19,13 +18,14 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Film {
-   private int id;
-   private String name;
-   private String description;
-   private LocalDate releaseDate;
-   private long duration;
-   private Mpa mpa;
-   private List<Genre> genres = new ArrayList<>();
+    private int id;
+    private String name;
+    private String description;
+    private LocalDate releaseDate;
+    private long duration;
+    private Mpa mpa;
+    private List<Genre> genres = new ArrayList<>();
+    private List<Director> directors = new ArrayList<>();
 
 
     public Film(String name, String description, LocalDate releaseDate, long duration) {

@@ -10,10 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.service.DirectorsService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -27,6 +25,7 @@ import java.util.List;
 public class FilmControllerTest {
     private final FilmService filmService;
     private final UserService userService;
+    private final DirectorsService directorsService;
     private final JdbcTemplate jdbcTemplate;
     private final User user = new User("user@ya.ru", "flying_dragon", "Andrew",
             LocalDate.of(1996, 12, 3));
@@ -46,6 +45,7 @@ public class FilmControllerTest {
     void afterEach() {
         jdbcTemplate.execute("DELETE FROM users");
         jdbcTemplate.execute("DELETE FROM films");
+        jdbcTemplate.execute("DELETE FROM directors");
     }
 
     @Test
@@ -146,5 +146,49 @@ public class FilmControllerTest {
 
         Assertions.assertThrows(NotFoundException.class,
                 () -> filmService.dislike(film.getId(), user.getId()));
+    }
+
+    @Test
+    void searchFilms_shouldReturnFilmsByTitle() {
+        film.setMpa(new Mpa(1));
+        film.setGenres(List.of(new Genre(1)));
+        filmService.addFilm(film);
+
+        List<Film> films = filmService.searchFilms("Ron's", new String[]{"title"});
+
+        Assertions.assertFalse(films.isEmpty());
+        Assertions.assertTrue(films.stream().allMatch(f -> f.getName().toLowerCase().contains("ron's".toLowerCase())));
+    }
+
+    @Test
+    void searchFilms_shouldReturnFilmsByDirector() {
+        film.setMpa(new Mpa(1));
+        film.setGenres(List.of(new Genre(1)));
+        Director director = new Director(1, "Director Name");
+        Director createdDirector = directorsService.createDirector(director);
+        film.setDirectors(List.of(createdDirector));
+        filmService.addFilm(film);
+
+        List<Film> films = filmService.searchFilms("Director", new String[]{"director"});
+
+        Assertions.assertFalse(films.isEmpty());
+        Assertions.assertTrue(films.stream().anyMatch(f -> f.getDirectors().stream()
+                .anyMatch(d -> d.getName().toLowerCase().contains("director".toLowerCase()))));
+    }
+
+    @Test
+    void searchFilms_shouldReturnFilmsByTitleAndDirector() {
+        film.setMpa(new Mpa(1));
+        film.setGenres(List.of(new Genre(1)));
+        Director director = new Director(1, "Director Name");
+        Director createdDirector = directorsService.createDirector(director);
+        film.setDirectors(List.of(createdDirector));
+        filmService.addFilm(film);
+
+        List<Film> films = filmService.searchFilms("Ron's", new String[]{"title", "director"});
+
+        Assertions.assertFalse(films.isEmpty());
+        Assertions.assertTrue(films.stream().anyMatch(f -> f.getName().toLowerCase().contains("ron's".toLowerCase()) ||
+                f.getDirectors().stream().anyMatch(d -> d.getName().toLowerCase().contains("ron's".toLowerCase()))));
     }
 }

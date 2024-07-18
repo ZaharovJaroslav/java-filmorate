@@ -30,4 +30,10 @@ public interface FilmStorage {
     void deleteGenres(int filmId);
 
     Optional<Film> checkForRepeat(Film film);
+
+    List<Film> findByYear(int count, int year);
+
+    List<Film> findByGenre(int count, int genreId);
+
+    List<Film> findByGenreYear(int count, int genreId, int year);
 }

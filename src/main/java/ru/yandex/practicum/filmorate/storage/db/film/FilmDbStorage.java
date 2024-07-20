@@ -101,9 +101,9 @@ public class FilmDbStorage implements FilmStorage {
         jdbcTemplate.update("DELETE FROM films WHERE film_id =?", id);
 
         if (getFilmById(id).isPresent()) {
-            log.trace("Пользователь с id = {} удален",id);
+            log.trace("Фильм с id = {} удален",id);
         } else
-            log.debug("Не удалось удалить  с id = {}", id);
+            log.debug("Не удалось удалить фильм  с id = {}", id);
     }
 
     @Override

@@ -12,12 +12,8 @@ public class FilmReviewRequest {
     private Boolean isPositive;
 
     public FilmReview toFilmReview() {
-        FilmReview filmReview = new FilmReview();
-        filmReview.setReviewId(reviewId);
-        filmReview.setFilmId(filmId);
-        filmReview.setUserId(userId);
-        filmReview.setContent(content);
-        filmReview.setIsPositive(isPositive);
-        return filmReview;
+        return reviewId != null
+                ? new FilmReview(reviewId, userId, filmId, content, isPositive)
+                : new FilmReview(userId, filmId, content, isPositive);
     }
 }

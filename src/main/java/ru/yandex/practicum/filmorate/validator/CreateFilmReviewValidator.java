@@ -17,17 +17,9 @@ public class CreateFilmReviewValidator extends AbstractValidator {
             log.error("Не указан идентификатор фильма");
             validateResult.add("Не указан идентификатор фильма");
         }
-        if (request.getFilmId() <= 0) {
-            log.error("Задан неверный идентификатор фильма");
-            validateResult.add("Задан неверный идентификатор фильма");
-        }
         if (request.getUserId() == null) {
             log.error("Не указан идентификатор пользователя");
             validateResult.add("Не указан идентификатор пользователя");
-        }
-        if (request.getUserId() <= 0) {
-            log.error("Задан неверный идентификатор пользователя");
-            validateResult.add("Задан неверный идентификатор пользователя");
         }
         if (request.getContent() == null || request.getContent().isBlank()) {
             log.error("Отзыв должен содержать текст");

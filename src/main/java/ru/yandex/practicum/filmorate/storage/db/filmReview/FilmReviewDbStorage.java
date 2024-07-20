@@ -25,8 +25,8 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
 
     @Override
     public Collection<FilmReview> getFilmReviews(int count) {
-        List<FilmReview> filmReviews = jdbcTemplate.query("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, ratings.useful FROM film_reviews " +
-                "JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
+        List<FilmReview> filmReviews = jdbcTemplate.query("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, IFNULL(ratings.useful, 0) as useful FROM film_reviews " +
+                "LEFT JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
                 "ON ratings.review_id = film_reviews.review_id " +
                 "LIMIT ?", new FilmReviewMapper(), count);
         log.trace("FilmReviewDbStorage::getFilmReviews success: {}", filmReviews);
@@ -35,8 +35,8 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
 
     @Override
     public Collection<FilmReview> getFilmReviewsByFilm(long filmId, int count) {
-        List<FilmReview> filmReviews = jdbcTemplate.query("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, ratings.useful FROM film_reviews " +
-                "JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
+        List<FilmReview> filmReviews = jdbcTemplate.query("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, IFNULL(ratings.useful, 0) as useful FROM film_reviews " +
+                "LEFT JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
                 "ON ratings.review_id = film_reviews.review_id " +
                 "WHERE film_reviews.film_id = ? " +
                 "LIMIT ?", new FilmReviewMapper(), filmId, count);
@@ -47,10 +47,10 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
     @Override
     public Optional<FilmReview> find(long id) {
         try {
-            FilmReview filmReview = jdbcTemplate.queryForObject("SELECT review_id, film_id, user_id, content, is_positive FROM film_reviews " +
-                            "JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
+            FilmReview filmReview = jdbcTemplate.queryForObject("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, IFNULL(ratings.useful, 0) as useful FROM film_reviews " +
+                            "LEFT JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
                             "ON ratings.review_id = film_reviews.review_id " +
-                            "WHERE review_id = ?",
+                            "WHERE film_reviews.review_id = ?",
                     new FilmReviewMapper(), id);
             log.trace("FilmReviewDbStorage::find success: {}", filmReview);
             return Optional.ofNullable(filmReview);
@@ -68,10 +68,10 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
                     "INSERT INTO film_reviews(film_id, user_id, content, is_positive) VALUES (?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS
             );
-            ps.setObject(0, filmReview.getFilmId());
-            ps.setObject(1, filmReview.getUserId());
-            ps.setObject(2, filmReview.getContent());
-            ps.setObject(3, filmReview.getIsPositive());
+            ps.setLong(1, filmReview.getFilmId());
+            ps.setLong(2, filmReview.getUserId());
+            ps.setString(3, filmReview.getContent());
+            ps.setBoolean(4, filmReview.getIsPositive());
             return ps;
         }, keyHolder);
         try {

@@ -6,8 +6,6 @@ import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.enums.EventOperation;
 import ru.yandex.practicum.filmorate.enums.UserEventType;
 
-import java.sql.Timestamp;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,7 +15,7 @@ public class UserEvent {
     private UserEventType eventType;
     private EventOperation operation;
     private long entityId;
-    private Timestamp timestamp;
+    private long timestamp;
 
     public UserEvent(long userId, UserEventType eventType, EventOperation operation, long entityId) {
         this.userId = userId;

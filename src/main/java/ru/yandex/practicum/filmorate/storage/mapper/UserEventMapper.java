@@ -18,7 +18,7 @@ public class UserEventMapper implements RowMapper<UserEvent> {
         userEvent.setEventType(UserEventType.valueOf(rs.getString("event_type")));
         userEvent.setOperation(EventOperation.valueOf(rs.getString("operation")));
         userEvent.setEntityId(rs.getLong("entity_id"));
-        userEvent.setTimestamp(rs.getTimestamp("timestamp"));
+        userEvent.setTimestamp(rs.getTimestamp("timestamp").getTime());
         return userEvent;
     }
 }

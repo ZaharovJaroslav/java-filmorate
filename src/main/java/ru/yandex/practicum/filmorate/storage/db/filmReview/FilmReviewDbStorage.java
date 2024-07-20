@@ -63,7 +63,7 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
             return ps;
         }, keyHolder);
         try {
-            long id = (Long) Objects.requireNonNull(keyHolder.getKeys()).get("ID");
+            long id = (Long) Objects.requireNonNull(keyHolder.getKeys()).get("review_id");
             Optional<FilmReview> filmReviewOptional = this.find(id);
             if (filmReviewOptional.isPresent()) {
                 log.trace("FilmReviewDbStorage::create success: {}", filmReviewOptional.get());

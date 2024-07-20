@@ -22,8 +22,14 @@ public class UserEventService {
         this.userEventStorage = userEventStorage;
     }
 
-    public Collection<UserEvent> get(long userId) {
-        return userEventStorage.get(userId);
+    /**
+     * Получить все события друзей пользователя
+     *
+     * @param userId    ИД пользователя
+     * @return          Список событий друзей
+     */
+    public Collection<UserEvent> getByUserFriends(long userId) {
+        return userEventStorage.getByUserFriends(userId);
     }
 
     /**

@@ -19,8 +19,8 @@ public class UserFeedController {
     }
 
     @GetMapping
-    public Collection<UserEvent> get(@PathVariable("id") int id) {
-        return userEventService.get(id);
+    public Collection<UserEvent> getByUserFriends(@PathVariable("id") int id) {
+        return userEventService.getByUserFriends(id);
     }
 }
 

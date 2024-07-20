@@ -23,9 +23,11 @@ public class UserEventDbStorage implements UserEventStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Collection<UserEvent> get(long userId) {
-        List<UserEvent> userEvents = jdbcTemplate.query("SELECT * FROM user_events " +
-                "WHERE user_id = ?", new UserEventMapper(), userId);
+    public Collection<UserEvent> getByUserFriends(long userId) {
+        List<UserEvent> userEvents = jdbcTemplate.query("SELECT * FROM USER_EVENTS WHERE USER_ID IN " +
+                "(SELECT USER_ID FROM FRIENDS WHERE FRIEND_ID = ? AND IS_FRIEND = true " +
+                "UNION SELECT FRIEND_ID FROM FRIENDS WHERE USER_ID = ? AND IS_FRIEND = true) " +
+                "ORDER BY TIMESTAMP DESC", new UserEventMapper(), userId, userId);
         log.trace("UserEventDbStorage::get success: {}", userEvents);
         return userEvents;
     }

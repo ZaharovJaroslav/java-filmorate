@@ -70,6 +70,39 @@ public class UserEventService {
         logEvent(userEvent, userEventStorage.create(userEvent));
     }
 
+    /**
+     * Создать событие: "Добавлен отзыв фильма"
+     *
+     * @param userId   ИД пользователя
+     * @param entityId ИД фильма
+     */
+    public void createFilmReviewEvent(long userId, long entityId) {
+        UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.ADD, entityId);
+        logEvent(userEvent, userEventStorage.create(userEvent));
+    }
+
+    /**
+     * Создать событие: "Изменен отзыв фильма"
+     *
+     * @param userId   ИД пользователя
+     * @param entityId ИД фильма
+     */
+    public void updateFilmReviewEvent(long userId, long entityId) {
+        UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.UPDATE, entityId);
+        logEvent(userEvent, userEventStorage.create(userEvent));
+    }
+
+    /**
+     * Создать событие: "Удален отзыв фильма"
+     *
+     * @param userId   ИД пользователя
+     * @param entityId ИД фильма
+     */
+    public void removeFilmReviewEvent(long userId, long entityId) {
+        UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.REMOVE, entityId);
+        logEvent(userEvent, userEventStorage.create(userEvent));
+    }
+
     private void logEvent(UserEvent userEvent, Optional<UserEvent> userEventOptional) {
         if (userEventOptional.isEmpty()) {
             log.warn("Не удалось создать событие <{} - {}> для пользователя <{}>. Объект: <{}>", userEvent.getEventType(), userEvent.getOperation(), userEvent.getUserId(), userEvent.getEntityId());

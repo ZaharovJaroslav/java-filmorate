@@ -22,14 +22,17 @@ public class FilmReviewService {
     private final FilmReviewStorage filmReviewStorage;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final UserEventService userEventService;
 
     @Autowired
     public FilmReviewService(@Qualifier("FilmReviewDbStorage") FilmReviewStorage filmReviewStorage,
                              @Qualifier("FilmDbStorage") FilmStorage filmStorage,
-                             @Qualifier("UserDbStorage") UserDbStorage userStorage) {
+                             @Qualifier("UserDbStorage") UserDbStorage userStorage,
+                             UserEventService userEventService) {
         this.filmReviewStorage = filmReviewStorage;
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.userEventService = userEventService;
     }
 
     public Collection<FilmReview> getFilmReviews(Optional<Long> filmId, int count) {
@@ -56,7 +59,11 @@ public class FilmReviewService {
         if (filmReviewOptional.isEmpty()) {
             throw new NotFoundException("Оценка для фильма не найдена");
         }
-        return filmReviewOptional.get();
+        FilmReview filmReview = filmReviewOptional.get();
+
+        userEventService.createFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
+
+        return filmReview;
     }
 
     public FilmReview update(FilmReviewRequest request) {
@@ -69,10 +76,16 @@ public class FilmReviewService {
         if (filmReviewOptional.isEmpty()) {
             throw new NotFoundException("Оценка для фильма не найдена");
         }
-        return filmReviewOptional.get();
+        FilmReview filmReview = filmReviewOptional.get();
+
+        userEventService.updateFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
+
+        return filmReview;
     }
 
     public void remove(long id) {
+        FilmReview filmReview = find(id);
         filmReviewStorage.remove(id);
+        userEventService.removeFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
     }
 }

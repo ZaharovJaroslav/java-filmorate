@@ -1,4 +1,3 @@
-
 package ru.yandex.practicum.filmorate.controller.FilmReview;
 
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +11,7 @@ import ru.yandex.practicum.filmorate.validator.CreateFilmReviewValidator;
 import ru.yandex.practicum.filmorate.validator.UpdateFilmReviewValidator;
 
 import java.util.Collection;
+import java.util.Optional;
 
 
 @Slf4j
@@ -26,8 +26,8 @@ public class FilmReviewController {
     }
 
     @GetMapping
-    protected Collection<FilmReview> getFilmReviews() {
-        return filmReviewService.getFilmReviews();
+    protected Collection<FilmReview> getFilmReviews(@RequestParam Optional<Long> filmId, @RequestParam(defaultValue = "10") Integer count) {
+        return filmReviewService.getFilmReviews(filmId, count);
     }
 
     @GetMapping("/{id}")

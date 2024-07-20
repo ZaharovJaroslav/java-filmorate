@@ -1,4 +1,3 @@
-
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +22,10 @@ public class FilmReviewService {
         this.filmReviewStorage = filmReviewStorage;
     }
 
-    public Collection<FilmReview> getFilmReviews() {
-        return filmReviewStorage.getFilmReviews();
+    public Collection<FilmReview> getFilmReviews(Optional<Long> filmId, int count) {
+        return filmId.isEmpty()
+                ? filmReviewStorage.getFilmReviews(count)
+                : filmReviewStorage.getFilmReviewsByFilm(filmId.get(), count);
     }
 
     public FilmReview find(long id) {

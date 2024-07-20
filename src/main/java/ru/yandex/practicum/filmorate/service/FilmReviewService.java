@@ -61,7 +61,7 @@ public class FilmReviewService {
         }
         FilmReview filmReview = filmReviewOptional.get();
 
-        userEventService.createFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
+        userEventService.createFilmReviewEvent(filmReview.getUserId(), filmReview.getReviewId());
 
         return filmReview;
     }
@@ -78,7 +78,7 @@ public class FilmReviewService {
         }
         FilmReview filmReview = filmReviewOptional.get();
 
-        userEventService.updateFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
+        userEventService.updateFilmReviewEvent(filmReview.getUserId(), filmReview.getReviewId());
 
         return filmReview;
     }
@@ -86,6 +86,6 @@ public class FilmReviewService {
     public void remove(long id) {
         FilmReview filmReview = find(id);
         filmReviewStorage.remove(id);
-        userEventService.removeFilmReviewEvent(filmReview.getUserId(), filmReview.getFilmId());
+        userEventService.removeFilmReviewEvent(filmReview.getUserId(), filmReview.getReviewId());
     }
 }

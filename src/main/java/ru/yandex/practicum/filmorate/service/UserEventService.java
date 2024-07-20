@@ -90,7 +90,7 @@ public class UserEventService {
      * Создать событие: "Добавлен отзыв фильма"
      *
      * @param userId   ИД пользователя
-     * @param entityId ИД фильма
+     * @param entityId ИД отзыва
      */
     public void createFilmReviewEvent(long userId, long entityId) {
         UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.ADD, entityId);
@@ -101,7 +101,7 @@ public class UserEventService {
      * Создать событие: "Изменен отзыв фильма"
      *
      * @param userId   ИД пользователя
-     * @param entityId ИД фильма
+     * @param entityId ИД отзыва
      */
     public void updateFilmReviewEvent(long userId, long entityId) {
         UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.UPDATE, entityId);
@@ -112,7 +112,7 @@ public class UserEventService {
      * Создать событие: "Удален отзыв фильма"
      *
      * @param userId   ИД пользователя
-     * @param entityId ИД фильма
+     * @param entityId ИД отзыва
      */
     public void removeFilmReviewEvent(long userId, long entityId) {
         UserEvent userEvent = new UserEvent(userId, UserEventType.REVIEW, EventOperation.REMOVE, entityId);

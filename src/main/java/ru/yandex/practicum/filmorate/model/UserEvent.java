@@ -18,4 +18,11 @@ public class UserEvent {
     private EventOperation operation;
     private long entityId;
     private Timestamp timestamp;
+
+    public UserEvent(long userId, UserEventType eventType, EventOperation operation, long entityId) {
+        this.userId = userId;
+        this.eventType = eventType;
+        this.operation = operation;
+        this.entityId = entityId;
+    }
 }

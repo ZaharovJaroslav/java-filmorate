@@ -22,12 +22,15 @@ import java.util.stream.Collectors;
 public class  UserService {
     private final UserStorage userStorage;
     private final FriendshipDao friendshipDao;
+    private final UserEventService userEventService;
 
     @Autowired
     public UserService(@Qualifier("UserDbStorage") UserDbStorage userStorage,
-                         FriendshipDao friendshipDao) {
+                         FriendshipDao friendshipDao,
+                       UserEventService userEventService) {
         this.userStorage = userStorage;
         this.friendshipDao = friendshipDao;
+        this.userEventService = userEventService;
     }
 
     public User createUser(User user) {
@@ -114,6 +117,8 @@ public class  UserService {
             throw new ValidationException("Пользователь с id = userId1  и userId2 уже дружат");
         } else
             friendshipDao.addFriend(userId, newFriendId, isFriend);
+
+        userEventService.addFriendEvent(userId, newFriendId);
     }
 
     public void deleteFromFriends(int userId, int userToDeleteId) {
@@ -126,6 +131,8 @@ public class  UserService {
             throw new NotContentException("Пользователь с id = userId1  и userId2 не дружат");
         }
         friendshipDao.deleteFriend(userId,userToDeleteId);
+
+        userEventService.deleteFriendEvent(userId, userToDeleteId);
     }
 
     public Collection<User> getMutualFriends(int userId, int friendId) {

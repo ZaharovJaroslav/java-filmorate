@@ -73,10 +73,10 @@ public class FilmDbStorage implements FilmStorage {
                 film.getId());
        Optional<Film> thisFilm = getFilmById(film.getId());
         if (thisFilm.isPresent()) {
-            log.trace("Имя пользователя {} было обновлено в базе данных", thisFilm);
+            log.trace("Фильм {} обновлен в базе данных", thisFilm);
             return thisFilm.get();
         } else {
-            log.trace("не удалось обновить пользователя с id {}", film.getId());
+            log.trace("не удалось обновить фильм с id {}", film.getId());
             throw new NotFoundException("Фильм с таким id не существует");
         }
     }

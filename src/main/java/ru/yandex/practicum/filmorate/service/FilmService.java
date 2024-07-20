@@ -89,6 +89,7 @@ public class FilmService {
     }
 
     public void deleteFilmById(int id) {
+        log.debug("deleteFilmById({})", id);
         getFilmById(id);
         filmStorage.deleteFilmById(id);
 

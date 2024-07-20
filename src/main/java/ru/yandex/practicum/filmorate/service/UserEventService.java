@@ -23,6 +23,16 @@ public class UserEventService {
     }
 
     /**
+     * Получить все события пользователя
+     *
+     * @param userId    ИД пользователя
+     * @return          Список событий
+     */
+    public Collection<UserEvent> getByUser(long userId) {
+        return userEventStorage.getByUser(userId);
+    }
+
+    /**
      * Получить все события друзей пользователя
      *
      * @param userId    ИД пользователя

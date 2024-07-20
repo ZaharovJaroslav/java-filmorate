@@ -25,8 +25,8 @@ public class UserEventService {
     /**
      * Получить все события пользователя
      *
-     * @param userId    ИД пользователя
-     * @return          Список событий
+     * @param userId ИД пользователя
+     * @return Список событий
      */
     public Collection<UserEvent> getByUser(long userId) {
         return userEventStorage.getByUser(userId);
@@ -35,8 +35,8 @@ public class UserEventService {
     /**
      * Получить все события друзей пользователя
      *
-     * @param userId    ИД пользователя
-     * @return          Список событий друзей
+     * @param userId ИД пользователя
+     * @return Список событий друзей
      */
     public Collection<UserEvent> getByUserFriends(long userId) {
         return userEventStorage.getByUserFriends(userId);

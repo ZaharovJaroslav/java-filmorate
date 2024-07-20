@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface UserEventStorage {
     Collection<UserEvent> getByUser(long userId);
+
     Collection<UserEvent> getByUserFriends(long userId);
 
     Optional<UserEvent> create(UserEvent userEvent);

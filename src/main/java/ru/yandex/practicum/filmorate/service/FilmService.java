@@ -29,18 +29,21 @@ public class FilmService {
     private final GenreDao genreDao;
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
+    private final UserEventService userEventService;
 
     @Autowired
     public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
                        @Qualifier("UserDbStorage") UserStorage userStorage,
                        GenreDao genreDao,
                        MpaDao mpaDao,
-                       LikeDao likeDao) {
+                       LikeDao likeDao,
+                       UserEventService userEventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreDao = genreDao;
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
+        this.userEventService = userEventService;
     }
 
     public Film addFilm(Film film) {
@@ -121,6 +124,8 @@ public class FilmService {
             throw new  NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
         }
         likeDao.like(filmId, userId);
+
+        userEventService.addLikeEvent(userId, filmId);
     }
 
     public void dislike(int filmId, int userId) {
@@ -130,6 +135,8 @@ public class FilmService {
             throw new NotFoundException("Пользователю с идентификатором " + userId + " не понравился фильм" + filmId);
         }
         likeDao.dislike(filmId, userId);
+
+        userEventService.dislikeEvent(userId, filmId);
     }
 
     private void likeChecker(int filmId, int userId) {

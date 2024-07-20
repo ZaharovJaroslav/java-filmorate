@@ -48,6 +48,28 @@ public class UserEventService {
         logEvent(userEvent, userEventStorage.create(userEvent));
     }
 
+    /**
+     * Создать событие: "Добавлен лайк для фильма"
+     *
+     * @param userId   ИД пользователя
+     * @param entityId ИД пользователя-друга
+     */
+    public void addLikeEvent(long userId, long entityId) {
+        UserEvent userEvent = new UserEvent(userId, UserEventType.LIKE, EventOperation.ADD, entityId);
+        logEvent(userEvent, userEventStorage.create(userEvent));
+    }
+
+    /**
+     * Создать событие: "Удален лайк для фильма"
+     *
+     * @param userId   ИД пользователя
+     * @param entityId ИД пользователя-друга
+     */
+    public void dislikeEvent(long userId, long entityId) {
+        UserEvent userEvent = new UserEvent(userId, UserEventType.LIKE, EventOperation.REMOVE, entityId);
+        logEvent(userEvent, userEventStorage.create(userEvent));
+    }
+
     private void logEvent(UserEvent userEvent, Optional<UserEvent> userEventOptional) {
         if (userEventOptional.isEmpty()) {
             log.warn("Не удалось создать событие <{} - {}> для пользователя <{}>. Объект: <{}>", userEvent.getEventType(), userEvent.getOperation(), userEvent.getUserId(), userEvent.getEntityId());

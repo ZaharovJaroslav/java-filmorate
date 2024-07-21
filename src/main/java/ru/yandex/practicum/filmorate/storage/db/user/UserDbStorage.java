@@ -61,10 +61,10 @@ public class UserDbStorage implements UserStorage {
         log.debug("deleteUserById({})", id);
         jdbcTemplate.update("DELETE FROM users WHERE user_id=?", id);
 
-       if (getUserById(id).isPresent()) {
-           log.trace("Пользователь с id = {} удален",id);
-       } else
-           log.debug("Не удалось удалить пользователся с id = {}", id);
+        if (getUserById(id).isPresent()) {
+            log.trace("Пользователь с id = {} удален", id);
+        } else
+            log.debug("Не удалось удалить пользователся с id = {}", id);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class UserDbStorage implements UserStorage {
                 "SELECT user_id, email, login, name, birthday FROM users ",
                 new UserMapper());
         log.trace("Это пользователи в базе данных: : {}", users);
-        return  users;
+        return users;
     }
 
     @Override
@@ -95,5 +95,20 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void checkNotExsistUser(int userId) {
 
+    }
+
+    @Override
+    public Optional<Integer> findUserWithMaxCommonLikes(int id) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT lB.user_id " +
+                    "FROM likes lA, likes lB " +
+                    "WHERE lA.film_id = lB.film_id " +
+                    "AND lA.user_id != lB.user_id " +
+                    "AND lA.user_id = ? " +
+                    "GROUP BY lA.user_id, lB.user_id " +
+                    "ORDER BY count(*) desc limit 1", Integer.class, id));
+        } catch (EmptyResultDataAccessException exception) {
+            return Optional.empty();
+        }
     }
 }

@@ -18,4 +18,5 @@ public interface UserStorage {
 
     void checkNotExsistUser(int userId);
 
+    Optional<Integer> findUserWithMaxCommonLikes(int id);
 }

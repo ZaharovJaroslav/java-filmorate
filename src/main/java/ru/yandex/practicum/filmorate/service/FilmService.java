@@ -44,7 +44,7 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
-        log.debug("addFilm(({})",film);
+        log.debug("addFilm(({})", film);
         checkIfExists(film);
         validationFilm(film);
         Set<Genre> genres = new HashSet<>(film.getGenres());
@@ -52,12 +52,12 @@ public class FilmService {
         Optional<Film> thisFilm = filmStorage.checkForRepeat(film);
         if (thisFilm.isPresent()) {
             Film filmUpdated = thisFilm.get();
-            filmStorage.updateGenres(filmUpdated.getId(),genres.stream().toList());
+            filmStorage.updateGenres(filmUpdated.getId(), genres.stream().toList());
             filmUpdated.setGenres(filmStorage.getGenres(filmUpdated.getId()));
             return filmUpdated;
         } else {
             Film newFilm = filmStorage.addFilm(film);
-            filmStorage.addGenres(newFilm.getId(),genres.stream().toList());
+            filmStorage.addGenres(newFilm.getId(), genres.stream().toList());
             newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
             newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
             return newFilm;
@@ -94,6 +94,14 @@ public class FilmService {
         return films;
     }
 
+    private List<Film> fillFilms(List<Film> films) {
+        for (Film film : films) {
+            film.setGenres(filmStorage.getGenres(film.getId()));
+            film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+        }
+        return films;
+    }
+
     public List<Genre> getGenresFilm(int filmId) {
         log.debug("getGenresFilm");
         filmStorage.getFilmById(filmId);
@@ -118,7 +126,7 @@ public class FilmService {
         log.debug("addLike({}, {})", filmId, userId);
         likeChecker(filmId, userId);
         if (likeDao.isLiked(filmId, userId)) {
-            throw new  NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
+            throw new NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
         }
         likeDao.like(filmId, userId);
     }
@@ -170,5 +178,9 @@ public class FilmService {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
         }
+    }
+
+    public List<Film> getRecommendedFilms(int userId, int commonUserId) {
+        return fillFilms(filmStorage.getRecommendedFilms(userId, commonUserId));
     }
 }

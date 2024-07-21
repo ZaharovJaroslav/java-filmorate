@@ -70,7 +70,6 @@ public class DirectorDaoImpl implements DirectorDao {
     @Override
     public boolean deleteById(long id) {
         log.debug("deleteById({})", id);
-        //при удалении нужно ли удалять в фильмах???
         String sql = "DELETE FROM directors WHERE id = ?";
         return jdbcTemplate.update(sql, id) > 0;
     }

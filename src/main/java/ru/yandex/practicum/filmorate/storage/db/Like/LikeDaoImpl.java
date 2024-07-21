@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.storage.mapper.LikeMapper;
 
+import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -51,5 +54,12 @@ public class LikeDaoImpl implements LikeDao {
             log.trace("Нет лайка на фильм {} от пользователя {}", filmId, userId);
             return false;
         }
+    }
+
+    @Override
+    public Optional<Collection<Like>> getAllLikesUser(int userId) {
+        log.debug("getAllLikesUser({})", userId);
+        return Optional.of(jdbcTemplate.query("SELECT* FROM likes WHERE user_id=?",
+                new LikeMapper(), userId));
     }
 }

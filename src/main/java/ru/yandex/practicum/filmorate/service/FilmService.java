@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.db.Like.LikeDao;
 import ru.yandex.practicum.filmorate.storage.db.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.db.genre.GenreDao;
@@ -94,6 +96,29 @@ public class FilmService {
         return films;
     }
 
+    public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
+        log.debug("getCommonFilmsSortedByPopular({},{})",userId, friendId);
+        Collection<Film> films = new ArrayList<>();
+        checkNotExsistUser(userId);
+        checkNotExsistUser(friendId);
+        Optional<Collection<Like>> userLikes = likeDao.getAllLikesUser(userId);
+        Optional<Collection<Like>> friendLikes = likeDao.getAllLikesUser(friendId);
+
+        if (userLikes.isPresent() && friendLikes.isPresent()) {
+            List<Integer> userFilmsId = userLikes.get().stream()
+                    .mapToInt(Like::getFilmId)
+                    .boxed()
+                    .toList();
+
+            return films = friendLikes.get().stream()
+                    .filter(like -> userFilmsId.contains(like.getFilmId()))
+                    .map(like -> getFilmById(like.getFilmId()))
+                    .sorted(this::compare)
+                    .collect(Collectors.toList());
+        } else
+            return films;
+    }
+
     public List<Genre> getGenresFilm(int filmId) {
         log.debug("getGenresFilm");
         filmStorage.getFilmById(filmId);
@@ -169,6 +194,13 @@ public class FilmService {
             if (!genreDao.isContains(genre.getId())) {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
+        }
+    }
+
+    public void checkNotExsistUser(int userId) {
+        Optional<User> thisUser = userStorage.getUserById(userId);
+        if (thisUser.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
     }
 }

@@ -17,7 +17,6 @@ import ru.yandex.practicum.filmorate.storage.mapper.MpaMapper;
 
 import java.sql.Date;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j

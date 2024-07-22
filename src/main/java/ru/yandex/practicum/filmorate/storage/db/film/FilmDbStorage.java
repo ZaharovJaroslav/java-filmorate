@@ -180,21 +180,24 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> searchFilms(String query, String[] by) {
         String likeQuery = "%" + query.toLowerCase() + "%";
-        String sql = "SELECT f.* FROM films f " +
-                "LEFT JOIN film_directors fd ON f.film_id = fd.film_id " +
-                "LEFT JOIN directors d ON fd.director_id = d.id " +
-                "WHERE " + Stream.of(by)
-                .map(field -> {
-                    if ("title".equals(field)) {
-                        return "LOWER(f.name) LIKE ?";
-                    } else if ("director".equals(field)) {
-                        return "LOWER(d.name) LIKE ?";
-                    } else {
-                        throw new IllegalArgumentException("Неверное поле поиска : " + field);
-                    }
-                })
-                .collect(Collectors.joining(" OR ")) +
-                " ORDER BY (SELECT COUNT(*) FROM likes WHERE film_id = f.film_id) DESC";
+        StringJoiner conditionsQuery = new StringJoiner(" OR ");
+
+        for (String field : by) {
+            if ("title".equalsIgnoreCase(field)) {
+                conditionsQuery.add("LOWER(films.name) LIKE ?");
+            } else if ("director".equalsIgnoreCase(field)) {
+                conditionsQuery.add("LOWER(directors.name) LIKE ?");
+            } else {
+                throw new IllegalArgumentException("Неверное поле поиска: " + field);
+            }
+        }
+
+        String sql = "SELECT films.film_id, films.name, films.description, films.release_date, films.duration, films.mpa_id " +
+                "FROM films " +
+                "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                "LEFT JOIN directors ON film_directors.director_id = directors.id " +
+                (conditionsQuery.length() == 0 ? "" : "WHERE " + conditionsQuery) +
+                "ORDER BY (SELECT COUNT(*) FROM likes WHERE film_id = films.film_id) DESC";
 
         Object[] params = Stream.of(by)
                 .map(field -> likeQuery)

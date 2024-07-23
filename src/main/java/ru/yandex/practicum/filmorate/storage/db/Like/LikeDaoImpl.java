@@ -18,7 +18,6 @@ import java.util.Optional;
 public class LikeDaoImpl implements LikeDao {
     private final JdbcTemplate jdbcTemplate;
 
-
     @Override
     public void like(int filmId, int userId) {
         log.debug("like({}, {})", filmId, userId);
@@ -48,7 +47,7 @@ public class LikeDaoImpl implements LikeDao {
         try {
             jdbcTemplate.queryForObject("SELECT film_id, user_id FROM likes WHERE film_id=? AND user_id=?",
                     new LikeMapper(), filmId, userId);
-            log.trace("The movie {} was liked by user {}", filmId, userId);
+            log.trace("Фильм {} понравился пользователю {}", filmId, userId);
             return true;
         } catch (EmptyResultDataAccessException exception) {
             log.trace("Нет лайка на фильм {} от пользователя {}", filmId, userId);

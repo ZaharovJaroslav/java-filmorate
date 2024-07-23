@@ -56,7 +56,6 @@ public class FilmController {
         filmService.addLike(id, userId);
     }
 
-
     @GetMapping("/films/popular")
     public Collection<Film> getPopularMoviesByLikes(@RequestParam(name = "count", required = false) String count) {
         if (count.isBlank()) {
@@ -78,6 +77,11 @@ public class FilmController {
     @DeleteMapping("/films/{id}")
     public void deleteFilmById(@PathVariable("id") int id) {
         filmService.deleteFilmById(id);
+    }
+
+    @GetMapping("/films/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable long directorId, @RequestParam String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
     }
 }
 

@@ -6,10 +6,14 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.storage.mapper.DirectorMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreMapper;
+import ru.yandex.practicum.filmorate.storage.mapper.MpaMapper;
 
 import java.sql.Date;
 import java.util.*;
@@ -20,10 +24,10 @@ import java.util.*;
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
-
     @Override
     public Film addFilm(Film film) {
         log.debug("addFilm({})", film);
+
         jdbcTemplate.update(
                 "INSERT INTO films (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)",
                 film.getName(),
@@ -40,6 +44,11 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId());
         log.trace("Фильм {} был добавлен в базу данных", thisFilm);
+
+        for (Director director : film.getDirectors()) {
+            jdbcTemplate.update("INSERT INTO film_directors (film_id, director_id) VALUES (?, ?)",
+                    thisFilm.getId(), director.getId());
+        }
         return thisFilm;
     }
 
@@ -79,6 +88,14 @@ public class FilmDbStorage implements FilmStorage {
             log.trace("не удалось обновить фильм с id {}", film.getId());
             throw new NotFoundException("Фильм с таким id не существует");
         }
+
+        jdbcTemplate.update("DELETE FROM film_directors WHERE film_id=?", film.getId());
+        for (Director director : film.getDirectors()) {
+            jdbcTemplate.update("INSERT INTO film_directors (film_id, director_id) VALUES (?, ?)",
+                    film.getId(), director.getId());
+        }
+
+        return thisFilm;
     }
 
     @Override
@@ -89,10 +106,16 @@ public class FilmDbStorage implements FilmStorage {
                     "SELECT film_id, name, description, release_date, duration, mpa_id FROM films WHERE film_id=?",
                     new FilmMapper(), filmId);
             log.trace("Фильм {} был возвращен", thisFilm);
+            List<Director> directors = jdbcTemplate.query(
+                    "SELECT d.id, d.name FROM directors d JOIN film_directors fd ON fd.director_id = d.id WHERE fd.film_id = ?",
+                    new DirectorMapper(), filmId);
+            thisFilm.setDirectors(directors);
+
             return Optional.ofNullable(thisFilm);
         } catch (EmptyResultDataAccessException ignored) {
             return Optional.empty();
         }
+
     }
 
     @Override
@@ -112,6 +135,12 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbcTemplate.query(
                 "SELECT film_id, name, description, release_date, duration, mpa_id FROM films", new FilmMapper());
         log.trace("В базе данных есть фильмы: {}", films);
+        for (Film film : films) {
+            List<Director> directors = jdbcTemplate.query(
+                    "SELECT d.id, d.name FROM directors d JOIN film_directors fd ON fd.director_id = d.id WHERE fd.film_id = ?",
+                    new DirectorMapper(), film.getId());
+            film.setDirectors(directors);
+        }
         return films;
     }
 
@@ -147,5 +176,30 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("deleteGenres({})", filmId);
         jdbcTemplate.update("DELETE FROM film_genre WHERE film_id=?", filmId);
         log.trace("Все жанры были удалены для фильма с идентификатором {}", filmId);
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(long directorId) {
+        String sql = "SELECT f.* FROM films f JOIN film_directors fd ON f.film_id = fd.film_id WHERE fd.director_id = ?";
+        List<Film> films = jdbcTemplate.query(sql, new FilmMapper(), directorId);
+
+        for (Film film : films) {
+            // Получение MPA
+            String mpaSql = "SELECT * FROM film_mpa WHERE mpa_id = ?";
+            Mpa mpa = jdbcTemplate.queryForObject(mpaSql, new MpaMapper(), film.getMpa().getId());
+            film.setMpa(mpa);
+
+            // Получение жанров
+            String genresSql = "SELECT g.* FROM genre g JOIN film_genre fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
+            List<Genre> genres = jdbcTemplate.query(genresSql, new GenreMapper(), film.getId());
+            film.setGenres(genres);
+
+            // Получение режиссеров
+            String directorsSql = "SELECT d.* FROM directors d JOIN film_directors fd ON d.id = fd.director_id WHERE fd.film_id = ?";
+            List<Director> directors = jdbcTemplate.query(directorsSql, new DirectorMapper(), film.getId());
+            film.setDirectors(directors);
+        }
+
+        return films;
     }
 }

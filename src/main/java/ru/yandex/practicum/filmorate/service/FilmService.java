@@ -22,6 +22,7 @@ import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.storage.db.film.FilmStorage.*;
 

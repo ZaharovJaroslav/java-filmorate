@@ -86,5 +86,11 @@ public class FilmController {
         List<Film> films = filmService.searchFilms(query, searchFields);
         return ResponseEntity.ok(films);
     }
+
+    @DeleteMapping("/films/{id}")
+    public void deleteFilmById(@PathVariable("id") int id) {
+        filmService.deleteFilmById(id);
+    }
+
 }
 

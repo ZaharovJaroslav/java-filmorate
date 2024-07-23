@@ -79,11 +79,22 @@ public class FilmService {
 
     public Film getFilmById(int filmId) {
         log.debug("getFilmById");
-        Film film = filmStorage.getFilmById(filmId);
-        Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
-        film.setGenres(genres.stream().toList());
-        film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
-        return film;
+        Optional<Film> film = filmStorage.getFilmById(filmId);
+        if (film.isPresent()) {
+            Film thisFilm = film.get();
+            Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
+            thisFilm.setGenres(genres.stream().toList());
+            thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
+            return thisFilm;
+        } else
+            throw new NotFoundException("Фильм с таким id не существует");
+    }
+
+    public void deleteFilmById(int id) {
+        log.debug("deleteFilmById({})", id);
+        getFilmById(id);
+        filmStorage.deleteFilmById(id);
+
     }
 
     public Collection<Film> getFilms() {

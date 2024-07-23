@@ -75,10 +75,9 @@ public class FilmController {
         filmService.dislike(id, userId);
     }
 
-    @GetMapping("/films/common")
-    public Collection<Film> getCommonFilmsSortedByPopular(@RequestParam int userId,
-                                                          @RequestParam int friendId) {
-        return filmService.getCommonFilmsSortedByPopular(userId,friendId);
+    @DeleteMapping("/films/{id}")
+    public void deleteFilmById(@PathVariable("id") int id) {
+        filmService.deleteFilmById(id);
     }
 }
 

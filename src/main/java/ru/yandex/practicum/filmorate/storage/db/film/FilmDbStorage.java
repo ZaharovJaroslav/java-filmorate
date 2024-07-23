@@ -20,6 +20,7 @@ import java.util.*;
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
+
     @Override
     public Film addFilm(Film film) {
         log.debug("addFilm({})", film);
@@ -70,27 +71,40 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-        Film thisFilm = getFilmById(film.getId());
-        log.trace("Фильм {} был обновлен в базе данных", thisFilm);
-        return thisFilm;
+       Optional<Film> thisFilm = getFilmById(film.getId());
+        if (thisFilm.isPresent()) {
+            log.trace("Фильм {} обновлен в базе данных", thisFilm);
+            return thisFilm.get();
+        } else {
+            log.trace("не удалось обновить фильм с id {}", film.getId());
+            throw new NotFoundException("Фильм с таким id не существует");
+        }
     }
 
     @Override
-    public Film getFilmById(int filmId) {
+    public Optional<Film> getFilmById(int filmId) {
         log.debug("getFilmById({})", filmId);
         try {
             Film thisFilm = jdbcTemplate.queryForObject(
                     "SELECT film_id, name, description, release_date, duration, mpa_id FROM films WHERE film_id=?",
                     new FilmMapper(), filmId);
             log.trace("Фильм {} был возвращен", thisFilm);
-            return thisFilm;
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Фильм с таким id не существует");
+            return Optional.ofNullable(thisFilm);
+        } catch (EmptyResultDataAccessException ignored) {
+            return Optional.empty();
         }
     }
 
+    @Override
+    public void deleteFilmById(int id) {
+        log.debug("deleteFilmById({})", id);
+        jdbcTemplate.update("DELETE FROM films WHERE film_id =?", id);
 
-
+        if (getFilmById(id).isPresent()) {
+            log.trace("Фильм с id = {} удален",id);
+        } else
+            log.debug("Не удалось удалить фильм  с id = {}", id);
+    }
 
     @Override
     public Collection<Film> getFilms() {

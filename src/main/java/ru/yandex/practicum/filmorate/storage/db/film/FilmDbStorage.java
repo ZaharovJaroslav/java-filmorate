@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -19,6 +21,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcOperations namedParameterJdbc;
 
     @Override
     public Film addFilm(Film film) {
@@ -134,40 +137,26 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> findByYear(int count, int year) {
-        log.debug("findByYear({}, {})", count, year);
-        List<Film> films = jdbcTemplate.query("SELECT films.film_id, name, description, release_date, duration, mpa_id " +
-                "FROM films " +
-                "LEFT JOIN likes ON films.film_id = likes.film_id " +
-                "WHERE YEAR(films.release_date) = ? " +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC LIMIT ?", new FilmMapper(), year, count);
-        log.trace("Найдены фильмы - год: {}",films);
-        return films;
-    }
+    public List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter) {
+        StringJoiner conditionsQuery = new StringJoiner("AND ");
+        Map<String, Integer> queryParams = new HashMap<>();
+        queryParams.put(FilmFilter.COUNT.getValue(), count);
 
-    @Override
-    public List<Film> findByGenre(int count, int genreId) {
-        log.debug("findByGenre({}, {})", count, genreId);
-        List<Film> films = jdbcTemplate.query("SELECT films.film_id, name, description, release_date, duration, mpa_id " +
+        if (filter.get(FilmFilter.YEAR).isPresent()) {
+            queryParams.put(FilmFilter.YEAR.getValue(), filter.get(FilmFilter.YEAR).get());
+            conditionsQuery.add("YEAR(films.release_date) = :" + FilmFilter.YEAR.getValue() + " ");
+        }
+        if (filter.get(FilmFilter.GENRE).isPresent()) {
+            queryParams.put(FilmFilter.GENRE.getValue(), filter.get(FilmFilter.GENRE).get());
+            conditionsQuery.add("film_genre.genre_id = :" + FilmFilter.GENRE.getValue() + " ");
+        }
+
+        String sql = "SELECT films.film_id, name, description, release_date, duration, mpa_id " +
                 "FROM film_genre " +
                 "RIGHT JOIN films on film_genre.film_id = films.film_id " +
                 "LEFT JOIN likes ON films.film_id = likes.film_id " +
-                "WHERE film_genre.genre_id = ? " +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC LIMIT ?", new FilmMapper(), genreId, count);
-        log.trace("Найдены фильмы - жанр: {}",films);
-        return films;
-    }
-
-    @Override
-    public List<Film> findByGenreYear(int count, int genreId, int year) {
-        log.debug("findByGenreYear({}, {}, {})", count, genreId, year);
-        List<Film> films = jdbcTemplate.query("SELECT films.film_id, name, description, release_date, duration, mpa_id " +
-                "FROM film_genre " +
-                "RIGHT JOIN films on film_genre.film_id = films.film_id " +
-                "LEFT JOIN likes ON films.film_id = likes.film_id " +
-                "WHERE film_genre.genre_id = ? AND YEAR(films.release_date) = ? " +
-                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC LIMIT ?", new FilmMapper(), genreId, year, count);
-        log.trace("Найдены фильмы - жанр и год: {}",films);
-        return films;
+                (conditionsQuery.length() == 0 ? "" : "WHERE " + conditionsQuery) +
+                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC LIMIT :" + FilmFilter.COUNT.getValue();
+        return namedParameterJdbc.query(sql, queryParams, new FilmMapper());
     }
 }

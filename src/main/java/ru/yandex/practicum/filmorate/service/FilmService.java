@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -17,7 +18,6 @@ import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.storage.db.film.FilmStorage.*;
 
@@ -110,21 +110,9 @@ public class FilmService {
 
     public Collection<Film> getPopularMoviesByLikes(int count, Optional<Integer> genreId, Optional<Integer> year) {
         log.debug("getPopularMoviesByLikes({})", count);
-        List<Film> popularMovies;
-        if (genreId.isPresent() && year.isPresent()) {
-            popularMovies = fillFilms(filmStorage.findByGenreYear(count, genreId.get(), year.get()));
-        } else if (genreId.isPresent()) {
-            popularMovies = fillFilms(filmStorage.findByGenre(count, genreId.get()));
-        } else if (year.isPresent()) {
-            popularMovies = fillFilms(filmStorage.findByYear(count, year.get()));
-        } else {
-            popularMovies = getFilms()
-                    .stream()
-                    .sorted(this::compare)
-                    .limit(count)
-                    .collect(Collectors.toList());
-        }
-        return popularMovies;
+        List<Film> popularMovies = filmStorage.findByFilter(count,
+                Map.of(FilmFilter.GENRE, genreId, FilmFilter.YEAR, year));
+        return fillFilms(popularMovies);
     }
 
     private int compare(Film film, Film otherFilm) {

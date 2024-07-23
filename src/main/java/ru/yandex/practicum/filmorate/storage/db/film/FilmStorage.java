@@ -19,7 +19,9 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-    Film getFilmById(int filmId);
+   Optional<Film> getFilmById(int filmId);
+
+    void deleteFilmById(int id);
 
     Collection<Film> getFilms();
 
@@ -34,4 +36,6 @@ public interface FilmStorage {
     Optional<Film> checkForRepeat(Film film);
 
     List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter);
+
+    List<Film> getFilmsByDirector(long directorId);
 }

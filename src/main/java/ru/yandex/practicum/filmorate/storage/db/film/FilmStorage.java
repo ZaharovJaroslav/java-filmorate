@@ -33,5 +33,7 @@ public interface FilmStorage {
 
     Optional<Film> checkForRepeat(Film film);
 
+    List<Film> getRecommendedFilms(int userId, int commonUserId);
+
     List<Film> getFilmsByDirector(long directorId);
 }

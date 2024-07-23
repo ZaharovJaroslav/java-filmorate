@@ -72,6 +72,19 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    @Override
+    public List<Film> getRecommendedFilms(int userId, int commonUserId) {
+        String findIdSql = "SELECT film_id FROM likes " +
+                "WHERE user_id = ? AND film_id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)";
+        try {
+            return jdbcTemplate.query(findIdSql,
+                    ((rs, rowN) -> getFilmById(rs.getInt("film_id")).get()), commonUserId, userId);
+        } catch (EmptyResultDataAccessException ignored) {
+            return List.of();
+        }
+    }
+
+    @Override
     public Film updateFilm(Film film) {
         log.debug("updateFilm({}).", film);
         jdbcTemplate.update(

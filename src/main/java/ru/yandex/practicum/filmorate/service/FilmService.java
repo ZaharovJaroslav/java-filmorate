@@ -259,4 +259,8 @@ public class FilmService {
         film.setDirectors(directors);
     }
 
+
+    public List<Film> getRecommendedFilms(int userId, int commonUserId) {
+        return fillFilms(filmStorage.getRecommendedFilms(userId, commonUserId));
+    }
 }

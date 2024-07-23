@@ -35,6 +35,8 @@ public interface FilmStorage {
 
     Optional<Film> checkForRepeat(Film film);
 
+    List<Film> getRecommendedFilms(int userId, int commonUserId);
+
     List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter);
 
     List<Film> getFilmsByDirector(long directorId);

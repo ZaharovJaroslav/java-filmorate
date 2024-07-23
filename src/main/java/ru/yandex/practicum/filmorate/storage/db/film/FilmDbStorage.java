@@ -75,7 +75,7 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE user_id = ? AND film_id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)";
         try {
             return jdbcTemplate.query(findIdSql,
-                    ((rs, rowN) -> getFilmById(rs.getInt("film_id"))), commonUserId, userId);
+                    ((rs, rowN) -> getFilmById(rs.getInt("film_id")).get()), commonUserId, userId);
         } catch (EmptyResultDataAccessException ignored) {
             return List.of();
         }
@@ -92,7 +92,12 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-       Optional<Film> thisFilm = getFilmById(film.getId());
+        jdbcTemplate.update("DELETE FROM film_directors WHERE film_id=?", film.getId());
+        for (Director director : film.getDirectors()) {
+            jdbcTemplate.update("INSERT INTO film_directors (film_id, director_id) VALUES (?, ?)",
+                    film.getId(), director.getId());
+        }
+        Optional<Film> thisFilm = getFilmById(film.getId());
         if (thisFilm.isPresent()) {
             log.trace("Фильм {} обновлен в базе данных", thisFilm);
             return thisFilm.get();
@@ -100,14 +105,6 @@ public class FilmDbStorage implements FilmStorage {
             log.trace("не удалось обновить фильм с id {}", film.getId());
             throw new NotFoundException("Фильм с таким id не существует");
         }
-
-        jdbcTemplate.update("DELETE FROM film_directors WHERE film_id=?", film.getId());
-        for (Director director : film.getDirectors()) {
-            jdbcTemplate.update("INSERT INTO film_directors (film_id, director_id) VALUES (?, ?)",
-                    film.getId(), director.getId());
-        }
-
-        return thisFilm;
     }
 
     @Override

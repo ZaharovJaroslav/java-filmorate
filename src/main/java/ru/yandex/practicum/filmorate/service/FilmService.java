@@ -8,9 +8,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.db.Like.LikeDao;
+import ru.yandex.practicum.filmorate.storage.db.directors.DirectorDao;
 import ru.yandex.practicum.filmorate.storage.db.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.db.genre.GenreDao;
 import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
@@ -29,22 +33,25 @@ public class FilmService {
     private final GenreDao genreDao;
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
+    private final DirectorDao directorDao;
 
     @Autowired
     public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
                        @Qualifier("UserDbStorage") UserStorage userStorage,
                        GenreDao genreDao,
                        MpaDao mpaDao,
-                       LikeDao likeDao) {
+                       LikeDao likeDao,
+                       DirectorDao directorDao) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreDao = genreDao;
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
+        this.directorDao = directorDao;
     }
 
     public Film addFilm(Film film) {
-        log.debug("addFilm(({})",film);
+        log.debug("addFilm(({})", film);
         checkIfExists(film);
         validationFilm(film);
         Set<Genre> genres = new HashSet<>(film.getGenres());
@@ -52,14 +59,15 @@ public class FilmService {
         Optional<Film> thisFilm = filmStorage.checkForRepeat(film);
         if (thisFilm.isPresent()) {
             Film filmUpdated = thisFilm.get();
-            filmStorage.updateGenres(filmUpdated.getId(),genres.stream().toList());
+            filmStorage.updateGenres(filmUpdated.getId(), genres.stream().toList());
             filmUpdated.setGenres(filmStorage.getGenres(filmUpdated.getId()));
             return filmUpdated;
         } else {
             Film newFilm = filmStorage.addFilm(film);
-            filmStorage.addGenres(newFilm.getId(),genres.stream().toList());
+            filmStorage.addGenres(newFilm.getId(), genres.stream().toList());
             newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
             newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
+            newFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
             return newFilm;
         }
     }
@@ -72,16 +80,29 @@ public class FilmService {
         filmStorage.updateGenres(thisFilm.getId(), film.getGenres());
         thisFilm.setGenres(filmStorage.getGenres(thisFilm.getId()));
         thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
+        thisFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
         return thisFilm;
     }
 
     public Film getFilmById(int filmId) {
         log.debug("getFilmById");
-        Film film = filmStorage.getFilmById(filmId);
-        Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
-        film.setGenres(genres.stream().toList());
-        film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
-        return film;
+        Optional<Film> film = filmStorage.getFilmById(filmId);
+        if (film.isPresent()) {
+            Film thisFilm = film.get();
+            Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
+            thisFilm.setGenres(genres.stream().toList());
+            thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
+            setDirectorsForFilm(thisFilm);
+            return thisFilm;
+        } else
+            throw new NotFoundException("Фильм с таким id не существует");
+    }
+
+    public void deleteFilmById(int id) {
+        log.debug("deleteFilmById({})", id);
+        getFilmById(id);
+        filmStorage.deleteFilmById(id);
+
     }
 
     public Collection<Film> getFilms() {
@@ -90,8 +111,40 @@ public class FilmService {
         for (Film film : films) {
             film.setGenres(filmStorage.getGenres(film.getId()));
             film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+            setDirectorsForFilm(film);
         }
         return films;
+    }
+
+    private List<Film> fillFilms(List<Film> films) {
+        for (Film film : films) {
+            film.setGenres(filmStorage.getGenres(film.getId()));
+            film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+        }
+        return films;
+    }
+
+    public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
+        log.debug("getCommonFilmsSortedByPopular({},{})",userId, friendId);
+        Collection<Film> films = new ArrayList<>();
+        checkNotExsistUser(userId);
+        checkNotExsistUser(friendId);
+        Optional<Collection<Like>> userLikes = likeDao.getAllLikesUser(userId);
+        Optional<Collection<Like>> friendLikes = likeDao.getAllLikesUser(friendId);
+
+        if (userLikes.isPresent() && friendLikes.isPresent()) {
+            List<Integer> userFilmsId = userLikes.get().stream()
+                    .mapToInt(Like::getFilmId)
+                    .boxed()
+                    .toList();
+
+            return films = friendLikes.get().stream()
+                    .filter(like -> userFilmsId.contains(like.getFilmId()))
+                    .map(like -> getFilmById(like.getFilmId()))
+                    .sorted(this::compare)
+                    .collect(Collectors.toList());
+        } else
+            return films;
     }
 
     public List<Genre> getGenresFilm(int filmId) {
@@ -118,7 +171,7 @@ public class FilmService {
         log.debug("addLike({}, {})", filmId, userId);
         likeChecker(filmId, userId);
         if (likeDao.isLiked(filmId, userId)) {
-            throw new  NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
+            throw new NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
         }
         likeDao.like(filmId, userId);
     }
@@ -130,12 +183,6 @@ public class FilmService {
             throw new NotFoundException("Пользователю с идентификатором " + userId + " не понравился фильм" + filmId);
         }
         likeDao.dislike(filmId, userId);
-    }
-
-    private void likeChecker(int filmId, int userId) {
-        log.debug("likeChecker({}, {})", filmId, userId);
-        filmStorage.getFilmById(filmId);
-        userStorage.checkNotExsistUser(userId);
     }
 
     public void validationFilm(Film film) {
@@ -160,6 +207,26 @@ public class FilmService {
         }
     }
 
+    public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        List<Film> films = filmStorage.getFilmsByDirector(directorId);
+        if ("year".equalsIgnoreCase(sortBy)) {
+            return films.stream()
+                    .sorted(Comparator.comparing(Film::getReleaseDate))
+                    .collect(Collectors.toList());
+        } else if ("likes".equalsIgnoreCase(sortBy)) {
+            return films.stream()
+                    .sorted((film1, film2) -> Integer.compare(likeDao.countLikes(film2.getId()), likeDao.countLikes(film1.getId())))
+                    .collect(Collectors.toList());
+        }
+        return films;
+    }
+
+    private void likeChecker(int filmId, int userId) {
+        log.debug("likeChecker({}, {})", filmId, userId);
+        filmStorage.getFilmById(filmId);
+        userStorage.checkNotExsistUser(userId);
+    }
+
     private void checkIfExists(Film film) {
         log.debug("checkIfExists");
         if (!mpaDao.isContains(film.getMpa().getId())) {
@@ -170,5 +237,32 @@ public class FilmService {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
         }
+    }
+
+    public void checkNotExsistUser(int userId) {
+        Optional<User> thisUser = userStorage.getUserById(userId);
+        if (thisUser.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
+        }
+    }
+
+    private List<Director> getDirectorsByIds(List<Director> directors) {
+        List<Director> foundDirectors = new ArrayList<>();
+        for (Director director : directors) {
+            Director foundDirector = directorDao.getDirectorById(director.getId())
+                    .orElseThrow(() -> new NotFoundException("Режиссер с id=" + director.getId() + " не найден."));
+            foundDirectors.add(foundDirector);
+        }
+        return foundDirectors;
+    }
+
+    private void setDirectorsForFilm(Film film) {
+        List<Director> directors = directorDao.getDirectorsByFilmId(film.getId());
+        film.setDirectors(directors);
+    }
+
+
+    public List<Film> getRecommendedFilms(int userId, int commonUserId) {
+        return fillFilms(filmStorage.getRecommendedFilms(userId, commonUserId));
     }
 }

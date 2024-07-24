@@ -125,7 +125,7 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
-        log.debug("getCommonFilmsSortedByPopular({},{})",userId, friendId);
+        log.debug("getCommonFilmsSortedByPopular({},{})", userId, friendId);
         Collection<Film> films = new ArrayList<>();
         checkNotExsistUser(userId);
         checkNotExsistUser(friendId);
@@ -219,6 +219,10 @@ public class FilmService {
                     .collect(Collectors.toList());
         }
         return films;
+    }
+
+    public List<Film> searchFilms(String query, String[] by) {
+        return filmStorage.searchFilms(query, by);
     }
 
     private void likeChecker(int filmId, int userId) {

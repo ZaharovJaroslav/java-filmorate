@@ -17,7 +17,7 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-   Optional<Film> getFilmById(int filmId);
+    Optional<Film> getFilmById(int filmId);
 
     void deleteFilmById(int id);
 
@@ -36,4 +36,6 @@ public interface FilmStorage {
     List<Film> getRecommendedFilms(int userId, int commonUserId);
 
     List<Film> getFilmsByDirector(long directorId);
+
+    List<Film> searchFilms(String query, String[] by);
 }

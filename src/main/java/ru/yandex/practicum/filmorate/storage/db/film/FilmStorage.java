@@ -19,7 +19,7 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-   Optional<Film> getFilmById(int filmId);
+    Optional<Film> getFilmById(int filmId);
 
     void deleteFilmById(int id);
 
@@ -40,4 +40,6 @@ public interface FilmStorage {
     List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter);
 
     List<Film> getFilmsByDirector(long directorId);
+
+    List<Film> searchFilms(String query, String[] by);
 }

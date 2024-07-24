@@ -19,6 +19,7 @@ import ru.yandex.practicum.filmorate.storage.mapper.MpaMapper;
 
 import java.sql.Date;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component("FilmDbStorage")
@@ -196,23 +197,63 @@ public class FilmDbStorage implements FilmStorage {
         List<Film> films = jdbcTemplate.query(sql, new FilmMapper(), directorId);
 
         for (Film film : films) {
-            // Получение MPA
-            String mpaSql = "SELECT * FROM film_mpa WHERE mpa_id = ?";
-            Mpa mpa = jdbcTemplate.queryForObject(mpaSql, new MpaMapper(), film.getMpa().getId());
-            film.setMpa(mpa);
-
-            // Получение жанров
-            String genresSql = "SELECT g.* FROM genre g JOIN film_genre fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
-            List<Genre> genres = jdbcTemplate.query(genresSql, new GenreMapper(), film.getId());
-            film.setGenres(genres);
-
-            // Получение режиссеров
-            String directorsSql = "SELECT d.* FROM directors d JOIN film_directors fd ON d.id = fd.director_id WHERE fd.film_id = ?";
-            List<Director> directors = jdbcTemplate.query(directorsSql, new DirectorMapper(), film.getId());
-            film.setDirectors(directors);
+            film.setMpa(getMpaForFilm(film.getMpa().getId()));
+            film.setGenres(getGenres(film.getId()));
+            film.setDirectors(getDirectorsForFilm(film.getId()));
         }
 
         return films;
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, String[] by) {
+        String likeQuery = "%" + query.toLowerCase() + "%";
+        StringJoiner conditionsQuery = new StringJoiner(" OR ");
+
+        for (String field : by) {
+            if ("title".equalsIgnoreCase(field)) {
+                conditionsQuery.add("LOWER(films.name) LIKE ?");
+            } else if ("director".equalsIgnoreCase(field)) {
+                conditionsQuery.add("LOWER(directors.name) LIKE ?");
+            } else {
+                throw new IllegalArgumentException("Неверное поле поиска: " + field);
+            }
+        }
+
+        String sql = "SELECT films.film_id, films.name, films.description, films.release_date, films.duration, films.mpa_id " +
+                "FROM films " +
+                "LEFT JOIN film_directors ON films.film_id = film_directors.film_id " +
+                "LEFT JOIN directors ON film_directors.director_id = directors.id " +
+                (conditionsQuery.length() == 0 ? "" : "WHERE " + conditionsQuery) +
+                "ORDER BY (SELECT COUNT(*) FROM likes WHERE film_id = films.film_id) DESC";
+
+        Object[] params = Stream.of(by)
+                .map(field -> likeQuery)
+                .toArray();
+
+        List<Film> films = jdbcTemplate.query(sql, params, new FilmMapper());
+
+        for (Film film : films) {
+            film.setGenres(getGenres(film.getId()));
+            film.setDirectors(getDirectorsForFilm(film.getId()));
+            film.setMpa(getMpaForFilm(film.getMpa().getId()));
+        }
+
+        return films;
+    }
+
+    private List<Director> getDirectorsForFilm(long filmId) {
+        log.debug("getDirectorsForFilm({})", filmId);
+        String sql = "SELECT d.* FROM directors d " +
+                "JOIN film_directors fd ON d.id = fd.director_id " +
+                "WHERE fd.film_id = ?";
+        return jdbcTemplate.query(sql, new DirectorMapper(), filmId);
+    }
+
+    private Mpa getMpaForFilm(long mpaId) {
+        log.debug("getMpaForFilm({})", mpaId);
+        String sql = "SELECT * FROM film_mpa WHERE mpa_id = ?";
+        return jdbcTemplate.queryForObject(sql, new MpaMapper(), mpaId);
     }
 
     @Override

@@ -4,6 +4,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -56,7 +57,6 @@ public class FilmController {
         filmService.addLike(id, userId);
     }
 
-
     @GetMapping("/films/popular")
     public Collection<Film> getPopularMoviesByLikes(@RequestParam(name = "count", required = false) String count) {
         if (count.isBlank()) {
@@ -73,6 +73,23 @@ public class FilmController {
     @DeleteMapping("/films/{id}/like/{userId}")
     public void removeLike(@PathVariable int id, @PathVariable int userId) {
         filmService.dislike(id, userId);
+    }
+
+    @GetMapping("/films/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable long directorId, @RequestParam String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/films/search")
+    public ResponseEntity<List<Film>> searchFilms(@RequestParam String query, @RequestParam String by) {
+        String[] searchFields = by.split(",");
+        List<Film> films = filmService.searchFilms(query, searchFields);
+        return ResponseEntity.ok(films);
+    }
+
+    @DeleteMapping("/films/{id}")
+    public void deleteFilmById(@PathVariable("id") int id) {
+        filmService.deleteFilmById(id);
     }
 
 }

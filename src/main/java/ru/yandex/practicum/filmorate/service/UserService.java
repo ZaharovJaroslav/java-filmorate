@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ObjectAlreadyExistsException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.exception.NotContentException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.db.friendship.FriendshipDao;
 import ru.yandex.practicum.filmorate.storage.db.user.UserDbStorage;
@@ -19,17 +20,20 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class  UserService {
+public class UserService {
     private final UserStorage userStorage;
     private final FriendshipDao friendshipDao;
+    private final FilmService filmService;
     private final UserEventService userEventService;
 
     @Autowired
     public UserService(@Qualifier("UserDbStorage") UserDbStorage userStorage,
-                         FriendshipDao friendshipDao,
+                       FriendshipDao friendshipDao,
+                       FilmService filmService,
                        UserEventService userEventService) {
         this.userStorage = userStorage;
         this.friendshipDao = friendshipDao;
+        this.filmService = filmService;
         this.userEventService = userEventService;
     }
 
@@ -37,10 +41,10 @@ public class  UserService {
         log.debug("createUser");
         Optional<User> thisUser = userStorage.getUserById(user.getId());
         if (thisUser.isEmpty()) {
-            User newUser =  validationUser(user);
+            User newUser = validationUser(user);
             return userStorage.createUser(newUser);
         } else
-            throw new ObjectAlreadyExistsException("Пользователь с id = " + user.getId() +  "уже существует");
+            throw new ObjectAlreadyExistsException("Пользователь с id = " + user.getId() + "уже существует");
     }
 
     public User updateUser(User user) {
@@ -107,10 +111,10 @@ public class  UserService {
 
 
     public void addFriend(int userId, int newFriendId) {
-        log.debug("addFriend({}, {})",userId, newFriendId);
+        log.debug("addFriend({}, {})", userId, newFriendId);
         checkNotExsistUser(userId);
         checkNotExsistUser(newFriendId);
-        validationUserId(userId,newFriendId);
+        validationUserId(userId, newFriendId);
 
         boolean isFriend = friendshipDao.isFriend(userId, newFriendId);
         if (isFriend) {
@@ -122,21 +126,21 @@ public class  UserService {
     }
 
     public void deleteFromFriends(int userId, int userToDeleteId) {
-        log.debug("deleteFromFriends({}, {})",userId, userToDeleteId);
-        validationUserId(userId,userToDeleteId);
+        log.debug("deleteFromFriends({}, {})", userId, userToDeleteId);
+        validationUserId(userId, userToDeleteId);
         checkNotExsistUser(userId);
         checkNotExsistUser(userToDeleteId);
 
         if (!friendshipDao.isFriend(userId, userToDeleteId)) {
             throw new NotContentException("Пользователь с id = userId1  и userId2 не дружат");
         }
-        friendshipDao.deleteFriend(userId,userToDeleteId);
+        friendshipDao.deleteFriend(userId, userToDeleteId);
 
         userEventService.deleteFriendEvent(userId, userToDeleteId);
     }
 
     public Collection<User> getMutualFriends(int userId, int friendId) {
-        log.debug("getMutualFriends({}, {})",userId, friendId);
+        log.debug("getMutualFriends({}, {})", userId, friendId);
         validationUserId(userId, friendId);
         List<User> userFriends = getUsersFriends(userId);
         List<User> friendFriends = getUsersFriends(friendId);
@@ -160,7 +164,7 @@ public class  UserService {
     }
 
     public void validationUserId(int userId1, int userId2) {
-        log.debug("validationUserId({}, {})",userId1, userId2);
+        log.debug("validationUserId({}, {})", userId1, userId2);
         log.debug("Валидация id пользвоателей  userId1 = {}, userId2 = {}", userId1, userId2);
         if (userId1 <= 0 || userId2 <= 0) {
             throw new ValidationException("id пользователя не может быть меньше значния <1>");
@@ -175,5 +179,13 @@ public class  UserService {
         if (thisUser.isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
+    }
+
+    public List<Film> getUsersRecommendations(int id) {
+        Optional<Integer> userId = userStorage.findUserWithMaxCommonLikes(id);
+        if (userId.isPresent()) {
+            return filmService.getRecommendedFilms(id, userId.get());
+        } else
+            return List.of();
     }
 }

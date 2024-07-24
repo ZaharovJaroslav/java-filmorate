@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -74,6 +75,11 @@ public class UserController {
     @GetMapping("/users/{id}/friends")
     public Collection<User> getUsersFriends(@PathVariable("id") int id) {
         return userService.getUsersFriends(id);
+    }
+
+    @GetMapping("/users/{id}/recommendations")
+    public Collection<Film> getUsersRecommendations(@PathVariable("id") int id) {
+        return userService.getUsersRecommendations(id);
     }
 }
 

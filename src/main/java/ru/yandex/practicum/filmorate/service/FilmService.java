@@ -34,6 +34,7 @@ public class FilmService {
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
     private final DirectorDao directorDao;
+    private final UserEventService userEventService;
 
     @Autowired
     public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
@@ -41,13 +42,15 @@ public class FilmService {
                        GenreDao genreDao,
                        MpaDao mpaDao,
                        LikeDao likeDao,
-                       DirectorDao directorDao) {
+                       DirectorDao directorDao,
+                       UserEventService userEventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreDao = genreDao;
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
         this.directorDao = directorDao;
+        this.userEventService = userEventService;
     }
 
     public Film addFilm(Film film) {
@@ -174,6 +177,8 @@ public class FilmService {
             throw new NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
         }
         likeDao.like(filmId, userId);
+
+        userEventService.addLikeEvent(userId, filmId);
     }
 
     public void dislike(int filmId, int userId) {
@@ -183,6 +188,8 @@ public class FilmService {
             throw new NotFoundException("Пользователю с идентификатором " + userId + " не понравился фильм" + filmId);
         }
         likeDao.dislike(filmId, userId);
+
+        userEventService.dislikeEvent(userId, filmId);
     }
 
     public void validationFilm(Film film) {

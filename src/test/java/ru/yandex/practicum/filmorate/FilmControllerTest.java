@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.service.UserService;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -121,7 +122,7 @@ public class FilmControllerTest {
         popularFilm.setGenres(List.of(new Genre(2), new Genre(3)));
         Film likedMovie = filmService.addFilm(popularFilm);
         filmService.addLike(likedMovie.getId(), newUser.getId());
-        Collection<Film> films = filmService.getPopularMoviesByLikes(1);
+        Collection<Film> films = filmService.getPopularMoviesByLikes(1, Optional.empty(), Optional.empty());
 
         Assertions.assertTrue(films.contains(likedMovie));
     }
@@ -134,7 +135,7 @@ public class FilmControllerTest {
         Film newFilm = filmService.addFilm(unexistingFilm);
         filmService.addLike(newFilm.getId(), newUser.getId());
 
-        Assertions.assertEquals(1, filmService.getPopularMoviesByLikes(1).size());
+        Assertions.assertEquals(1, filmService.getPopularMoviesByLikes(1,Optional.empty(),Optional.empty()).size());
     }
 
     @Test

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -156,14 +157,11 @@ public class FilmService {
         return filmStorage.getGenres(filmId);
     }
 
-    public Collection<Film> getPopularMoviesByLikes(int count) {
+    public Collection<Film> getPopularMoviesByLikes(int count, Optional<Integer> genreId, Optional<Integer> year) {
         log.debug("getPopularMoviesByLikes({})", count);
-        List<Film> popularMovies = getFilms()
-                .stream()
-                .sorted(this::compare)
-                .limit(count)
-                .collect(Collectors.toList());
-        return popularMovies;
+        List<Film> popularMovies = filmStorage.findByFilter(count,
+                Map.of(FilmFilter.GENRE, genreId, FilmFilter.YEAR, year));
+        return fillFilms(popularMovies);
     }
 
     private int compare(Film film, Film otherFilm) {

@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -24,6 +26,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcOperations namedParameterJdbc;
 
     @Override
     public Film addFilm(Film film) {
@@ -251,5 +254,29 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("getMpaForFilm({})", mpaId);
         String sql = "SELECT * FROM film_mpa WHERE mpa_id = ?";
         return jdbcTemplate.queryForObject(sql, new MpaMapper(), mpaId);
+    }
+
+    @Override
+    public List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter) {
+        StringJoiner conditionsQuery = new StringJoiner("AND ");
+        Map<String, Integer> queryParams = new HashMap<>();
+        queryParams.put(FilmFilter.COUNT.getValue(), count);
+
+        if (filter.get(FilmFilter.YEAR).isPresent()) {
+            queryParams.put(FilmFilter.YEAR.getValue(), filter.get(FilmFilter.YEAR).get());
+            conditionsQuery.add("YEAR(films.release_date) = :" + FilmFilter.YEAR.getValue() + " ");
+        }
+        if (filter.get(FilmFilter.GENRE).isPresent()) {
+            queryParams.put(FilmFilter.GENRE.getValue(), filter.get(FilmFilter.GENRE).get());
+            conditionsQuery.add("film_genre.genre_id = :" + FilmFilter.GENRE.getValue() + " ");
+        }
+
+        String sql = "SELECT films.film_id, name, description, release_date, duration, mpa_id " +
+                "FROM film_genre " +
+                "RIGHT JOIN films on film_genre.film_id = films.film_id " +
+                "LEFT JOIN likes ON films.film_id = likes.film_id " +
+                (conditionsQuery.length() == 0 ? "" : "WHERE " + conditionsQuery) +
+                "GROUP BY films.film_id ORDER BY COUNT(likes.user_id) DESC LIMIT :" + FilmFilter.COUNT.getValue();
+        return namedParameterJdbc.query(sql, queryParams, new FilmMapper());
     }
 }

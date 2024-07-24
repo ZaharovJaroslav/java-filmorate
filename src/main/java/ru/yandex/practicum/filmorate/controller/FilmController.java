@@ -58,11 +58,10 @@ public class FilmController {
     }
 
     @GetMapping("/films/popular")
-    public Collection<Film> getPopularMoviesByLikes(@RequestParam(name = "count", required = false) String count) {
-        if (count.isBlank()) {
-            return filmService.getPopularMoviesByLikes(10);
-        }
-        return filmService.getPopularMoviesByLikes(Integer.parseInt(count));
+    public Collection<Film> getPopularMoviesByLikes(@RequestParam(defaultValue = "10") int count,
+                                                    @RequestParam Optional<Integer> genreId,
+                                                    @RequestParam Optional<Integer> year) {
+        return filmService.getPopularMoviesByLikes(count, genreId, year);
     }
 
     @GetMapping("/films/id")

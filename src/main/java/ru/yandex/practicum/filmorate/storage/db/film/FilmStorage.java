@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.db.film;
 
+import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -7,6 +8,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface FilmStorage {
@@ -34,6 +36,8 @@ public interface FilmStorage {
     Optional<Film> checkForRepeat(Film film);
 
     List<Film> getRecommendedFilms(int userId, int commonUserId);
+
+    List<Film> findByFilter(int count, Map<FilmFilter, Optional<Integer>> filter);
 
     List<Film> getFilmsByDirector(long directorId);
 

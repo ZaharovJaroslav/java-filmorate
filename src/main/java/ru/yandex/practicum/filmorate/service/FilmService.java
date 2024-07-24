@@ -116,6 +116,14 @@ public class FilmService {
         return films;
     }
 
+    private List<Film> fillFilms(List<Film> films) {
+        for (Film film : films) {
+            film.setGenres(filmStorage.getGenres(film.getId()));
+            film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+        }
+        return films;
+    }
+
     public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
         log.debug("getCommonFilmsSortedByPopular({},{})", userId, friendId);
         Collection<Film> films = new ArrayList<>();
@@ -257,4 +265,8 @@ public class FilmService {
         film.setDirectors(directors);
     }
 
+
+    public List<Film> getRecommendedFilms(int userId, int commonUserId) {
+        return fillFilms(filmStorage.getRecommendedFilms(userId, commonUserId));
+    }
 }

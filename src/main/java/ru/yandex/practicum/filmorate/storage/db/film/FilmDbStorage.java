@@ -158,7 +158,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public void addGenres(int filmId, List<Genre> genres) {
+    public void addGenres(int filmId, Set<Genre> genres) {
         log.debug("addGenres({}, {})", filmId, genres);
         for (Genre genre : genres) {
             jdbcTemplate.update("INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)", filmId, genre.getId());
@@ -167,21 +167,21 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public void updateGenres(int filmId, List<Genre> genres) {
+    public void updateGenres(int filmId, Set<Genre> genres) {
         log.debug("updateGenres({}, {})", filmId, genres);
         deleteGenres(filmId);
         addGenres(filmId, genres);
     }
 
     @Override
-    public List<Genre> getGenres(int filmId) {
+    public Set<Genre> getGenres(int filmId) {
         log.debug("getGenres({})", filmId);
-        List<Genre> genres = new ArrayList<>(jdbcTemplate.query(
+        List<Genre> genres = jdbcTemplate.query(
                 "SELECT f.genre_id, g.genre_type FROM film_genre AS f " +
                         "LEFT OUTER JOIN genre AS g ON f.genre_id = g.genre_id WHERE f.film_id=? ORDER BY g.genre_id",
-                new GenreMapper(), filmId));
+                new GenreMapper(), filmId);
         log.trace("Были возвращены жанры для фильма с идентификатором {}", filmId);
-        return genres;
+        return new HashSet<>(genres);
     }
 
     @Override

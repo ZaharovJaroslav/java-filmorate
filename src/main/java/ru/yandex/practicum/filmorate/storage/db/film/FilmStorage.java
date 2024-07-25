@@ -6,10 +6,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public interface FilmStorage {
     int DESCRIPTION_LENGTH = 200;
@@ -25,11 +22,11 @@ public interface FilmStorage {
 
     Collection<Film> getFilms();
 
-    void addGenres(int filmId, List<Genre> genres);
+    void addGenres(int filmId, Set<Genre> genres);
 
-    void updateGenres(int filmId, List<Genre> genres);
+    void updateGenres(int filmId, Set<Genre> genres);
 
-    List<Genre> getGenres(int filmId);
+    Set<Genre> getGenres(int filmId);
 
     void deleteGenres(int filmId);
 

@@ -28,6 +28,7 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
         List<FilmReview> filmReviews = jdbcTemplate.query("SELECT film_reviews.review_id, film_reviews.film_id, film_reviews.user_id, film_reviews.content, film_reviews.is_positive, IFNULL(ratings.useful, 0) as useful FROM film_reviews " +
                 "LEFT JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
                 "ON ratings.review_id = film_reviews.review_id " +
+                "ORDER BY useful DESC " +
                 "LIMIT ?", new FilmReviewMapper(), count);
         log.trace("FilmReviewDbStorage::getFilmReviews success: {}", filmReviews);
         return filmReviews;
@@ -39,6 +40,7 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
                 "LEFT JOIN (SELECT SUM(rating) as useful, review_id FROM film_review_ratings GROUP BY review_id) as ratings " +
                 "ON ratings.review_id = film_reviews.review_id " +
                 "WHERE film_reviews.film_id = ? " +
+                "ORDER BY useful DESC " +
                 "LIMIT ?", new FilmReviewMapper(), filmId, count);
         log.trace("FilmReviewDbStorage::getFilmReviews success: {}", filmReviews);
         return filmReviews;
@@ -91,9 +93,7 @@ public class FilmReviewDbStorage implements FilmReviewStorage {
     @Override
     public Optional<FilmReview> update(FilmReview filmReview) {
         jdbcTemplate.update(
-                "UPDATE film_reviews SET film_id = ?, user_id = ?, content = ?, is_positive = ? WHERE review_id = ?",
-                filmReview.getFilmId(),
-                filmReview.getUserId(),
+                "UPDATE film_reviews SET content = ?, is_positive = ? WHERE review_id = ?",
                 filmReview.getContent(),
                 filmReview.getIsPositive(),
                 filmReview.getReviewId());

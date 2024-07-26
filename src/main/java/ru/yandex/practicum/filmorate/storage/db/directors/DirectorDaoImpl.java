@@ -70,6 +70,7 @@ public class DirectorDaoImpl implements DirectorDao {
     @Override
     public boolean deleteById(long id) {
         log.debug("deleteById({})", id);
+        jdbcTemplate.update("DELETE FROM film_directors WHERE director_id = ?", id);
         String sql = "DELETE FROM directors WHERE id = ?";
         return jdbcTemplate.update(sql, id) > 0;
     }

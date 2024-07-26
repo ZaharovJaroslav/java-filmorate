@@ -214,6 +214,9 @@ public class FilmService {
     }
 
     public List<Film> getFilmsByDirector(long directorId, String sortBy) {
+        if (!directorDao.existsById(directorId)) {
+            throw new NotFoundException("Режиссер с id=" + directorId + " не найден.");
+        }
         List<Film> films = filmStorage.getFilmsByDirector(directorId);
         if ("year".equalsIgnoreCase(sortBy)) {
             return films.stream()

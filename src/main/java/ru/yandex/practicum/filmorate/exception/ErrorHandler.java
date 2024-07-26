@@ -9,7 +9,8 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.controller.*;
 import ru.yandex.practicum.filmorate.controller.FilmReview.*;
 
-@RestControllerAdvice(assignableTypes = {UserController.class, FilmController.class, GenreController.class, MpaController.class, DirectorsController.class, FilmReviewController.class, FilmReviewRatingController.class})
+@RestControllerAdvice(assignableTypes = {UserController.class, FilmController.class, GenreController.class, MpaController.class,
+        DirectorsController.class, FilmReviewController.class, FilmReviewRatingController.class, UserFeedController.class})
 public class ErrorHandler {
 
     @ExceptionHandler

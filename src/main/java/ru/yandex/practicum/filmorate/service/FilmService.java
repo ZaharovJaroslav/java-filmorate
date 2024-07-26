@@ -180,9 +180,8 @@ public class FilmService {
             log.warn("Пользователю с идентификатором {} уже понравился фильм {}", userId, filmId);
         } else {
             likeDao.like(filmId, userId);
-            userEventService.addLikeEvent(userId, filmId);
         }
-
+        userEventService.addLikeEvent(userId, filmId);
     }
 
     public void dislike(int filmId, int userId) {

@@ -87,8 +87,13 @@ public class FilmController {
     }
 
     @DeleteMapping("/films/{id}")
-    public void deleteFilmById(@PathVariable("id") int id) {
-        filmService.deleteFilmById(id);
+    public ResponseEntity<Void> deleteFilmById(@PathVariable("id") int id) {
+        try {
+            filmService.deleteFilmById(id);
+            return ResponseEntity.noContent().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
 }

@@ -124,22 +124,24 @@ public class FilmDbStorage implements FilmStorage {
                     new DirectorMapper(), filmId);
             thisFilm.setDirectors(directors);
 
-            return Optional.ofNullable(thisFilm);
-        } catch (EmptyResultDataAccessException ignored) {
-            throw new NotFoundException("Фильм с таким id не существует");
+            return Optional.of(thisFilm);
+        } catch (EmptyResultDataAccessException e) {
+            log.debug("Фильм с id {} не найден", filmId);
+            return Optional.empty();
         }
-
     }
 
     @Override
     public void deleteFilmById(int id) {
         log.debug("deleteFilmById({})", id);
-        jdbcTemplate.update("DELETE FROM films WHERE film_id =?", id);
-
-        if (getFilmById(id).isPresent()) {
-            log.trace("Фильм с id = {} удален",id);
-        } else
-            log.debug("Не удалось удалить фильм  с id = {}", id);
+        Optional<Film> film = getFilmById(id);
+        if (film.isPresent()) {
+            jdbcTemplate.update("DELETE FROM films WHERE film_id = ?", id);
+            log.trace("Фильм с id = {} удален", id);
+        } else {
+            log.debug("Не удалось удалить фильм с id = {}", id);
+            throw new NotFoundException("Фильм с таким id не существует");
+        }
     }
 
     @Override

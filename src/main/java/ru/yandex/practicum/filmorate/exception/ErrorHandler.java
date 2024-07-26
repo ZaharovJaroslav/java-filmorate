@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -36,7 +37,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ErrorResponse handleResponseStatusException(final ResponseStatusException e) {
-        return new ErrorResponse("Ошибка обработки запроса", e.getReason());
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(final ResponseStatusException e) {
+        return new ResponseEntity<>(new ErrorResponse("Ошибка обработки запроса", e.getReason()), e.getStatusCode());
     }
 }

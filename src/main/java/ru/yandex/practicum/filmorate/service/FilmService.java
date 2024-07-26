@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -91,22 +93,24 @@ public class FilmService {
     public Film getFilmById(int filmId) {
         log.debug("getFilmById");
         Optional<Film> film = filmStorage.getFilmById(filmId);
-        if (film.isPresent()) {
-            Film thisFilm = film.get();
-            Set<Genre> genres = filmStorage.getGenres(filmId);
-            thisFilm.setGenres(genres);
-            thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
-            setDirectorsForFilm(thisFilm);
-            return thisFilm;
-        } else
+        if (film.isEmpty()) {
             throw new NotFoundException("Фильм с таким id не существует");
+        }
+        Film thisFilm = film.get();
+        thisFilm.setGenres(filmStorage.getGenres(filmId));
+        thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
+        setDirectorsForFilm(thisFilm);
+        return thisFilm;
     }
 
     public void deleteFilmById(int id) {
         log.debug("deleteFilmById({})", id);
-        getFilmById(id);
+        Optional<Film> film = filmStorage.getFilmById(id);
+        if (film.isEmpty()) {
+            throw new NotFoundException("Фильм с таким id не существует");
+        }
         filmStorage.deleteFilmById(id);
-
+        log.info("Фильм с id {} был удален", id);
     }
 
     public Collection<Film> getFilms() {
@@ -173,21 +177,21 @@ public class FilmService {
         log.debug("addLike({}, {})", filmId, userId);
         likeChecker(filmId, userId);
         if (likeDao.isLiked(filmId, userId)) {
-            throw new NotFoundException("Пользователю с идентификатором " + userId + " уже понравился фильм" + filmId);
+            log.warn("Пользователю с идентификатором {} уже понравился фильм {}", userId, filmId);
+        } else {
+            likeDao.like(filmId, userId);
+            userEventService.addLikeEvent(userId, filmId);
         }
-        likeDao.like(filmId, userId);
 
-        userEventService.addLikeEvent(userId, filmId);
     }
 
     public void dislike(int filmId, int userId) {
         log.debug("dislike({}, {})", filmId, userId);
         likeChecker(filmId, userId);
         if (!likeDao.isLiked(filmId, userId)) {
-            throw new NotFoundException("Пользователю с идентификатором " + userId + " не понравился фильм" + filmId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователю с идентификатором " + userId + " не понравился фильм " + filmId);
         }
         likeDao.dislike(filmId, userId);
-
         userEventService.dislikeEvent(userId, filmId);
     }
 

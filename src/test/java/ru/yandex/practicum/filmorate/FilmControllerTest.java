@@ -19,7 +19,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -53,7 +52,7 @@ public class FilmControllerTest {
     @Test
     public void addFilm_shouldaddFilm() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(2)));
+        film.setGenres(List.of(new Genre(2)));
         filmService.addFilm(film);
 
         Assertions.assertFalse(filmService.getFilms().isEmpty());
@@ -62,7 +61,7 @@ public class FilmControllerTest {
     @Test
     public void addFilm_shouldNotaddFilmIfDescriptionTooLong() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(2)));
+        film.setGenres(List.of(new Genre(2)));
         film.setDescription("This is the cartoon about a funny robot who always get into trouble." +
                 "Other people though he is defective, but there was a guy who was happy to get him on his birthday." +
                 "This cartoon show the future behaviour of our generation who grew up next to the phone and computer.");
@@ -73,9 +72,9 @@ public class FilmControllerTest {
     @Test
     public void updateFilm_shouldUpdateFilm() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         Film newFilm = filmService.addFilm(film);
-        newFilm.setGenres(Set.of(new Genre(3), new Genre(2)));
+        newFilm.setGenres(List.of(new Genre(3), new Genre(2)));
         Film filmUpdated = filmService.updateFilm(newFilm);
 
         Assertions.assertEquals(filmService.getFilmById(newFilm.getId()).getName(),
@@ -85,7 +84,7 @@ public class FilmControllerTest {
     @Test
     public void getFilmById_shouldReturnFilm() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         Film newFilm = filmService.addFilm(film);
 
         Assertions.assertEquals(newFilm, filmService.getFilmById(newFilm.getId()));
@@ -99,10 +98,10 @@ public class FilmControllerTest {
     @Test
     public void getFilms_shouldReturnListOfFilms() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         filmService.addFilm(film);
         popularFilm.setMpa(new Mpa(1));
-        popularFilm.setGenres(Set.of(new Genre(1), new Genre(2)));
+        popularFilm.setGenres(List.of(new Genre(1), new Genre(2)));
         filmService.addFilm(popularFilm);
 
         Assertions.assertEquals(2, filmService.getFilms().size());
@@ -117,10 +116,10 @@ public class FilmControllerTest {
     public void getPopularMovies_shouldReturnListOfPopularMovies() {
         User newUser = userService.createUser(user);
         updatedFilm.setMpa(new Mpa(3));
-        updatedFilm.setGenres(Set.of(new Genre(1), new Genre(2)));
+        updatedFilm.setGenres(List.of(new Genre(1), new Genre(2)));
         Film newFilm = filmService.addFilm(updatedFilm);
         popularFilm.setMpa(new Mpa(4));
-        popularFilm.setGenres(Set.of(new Genre(2), new Genre(3)));
+        popularFilm.setGenres(List.of(new Genre(2), new Genre(3)));
         Film likedMovie = filmService.addFilm(popularFilm);
         filmService.addLike(likedMovie.getId(), newUser.getId());
         Collection<Film> films = filmService.getPopularMoviesByLikes(1, Optional.empty(), Optional.empty());
@@ -132,7 +131,7 @@ public class FilmControllerTest {
     public void like_shouldLikeAMovie() {
         User newUser = userService.createUser(user);
         unexistingFilm.setMpa(new Mpa(3));
-        unexistingFilm.setGenres(Set.of(new Genre(1), new Genre(2)));
+        unexistingFilm.setGenres(List.of(new Genre(1), new Genre(2)));
         Film newFilm = filmService.addFilm(unexistingFilm);
         filmService.addLike(newFilm.getId(), newUser.getId());
 
@@ -143,7 +142,7 @@ public class FilmControllerTest {
     public void dislike_shouldNotDislikeAMovieIfItWasNotLiked() {
         userService.createUser(user);
         film.setMpa(new Mpa(3));
-        film.setGenres(Set.of(new Genre(1), new Genre(2)));
+        film.setGenres(List.of(new Genre(1), new Genre(2)));
         filmService.addFilm(film);
 
         Assertions.assertThrows(NotFoundException.class,
@@ -153,7 +152,7 @@ public class FilmControllerTest {
     @Test
     void searchFilms_shouldReturnFilmsByTitle() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         filmService.addFilm(film);
 
         List<Film> films = filmService.searchFilms("Ron's", new String[]{"title"});
@@ -165,7 +164,7 @@ public class FilmControllerTest {
     @Test
     void searchFilms_shouldReturnFilmsByDirector() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         Director director = new Director(1, "Director Name");
         Director createdDirector = directorsService.createDirector(director);
         film.setDirectors(List.of(createdDirector));
@@ -181,7 +180,7 @@ public class FilmControllerTest {
     @Test
     void searchFilms_shouldReturnFilmsByTitleAndDirector() {
         film.setMpa(new Mpa(1));
-        film.setGenres(Set.of(new Genre(1)));
+        film.setGenres(List.of(new Genre(1)));
         Director director = new Director(1, "Director Name");
         Director createdDirector = directorsService.createDirector(director);
         film.setDirectors(List.of(createdDirector));

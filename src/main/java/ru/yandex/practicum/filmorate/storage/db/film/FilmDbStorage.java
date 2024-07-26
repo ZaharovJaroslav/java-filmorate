@@ -126,7 +126,7 @@ public class FilmDbStorage implements FilmStorage {
 
             return Optional.ofNullable(thisFilm);
         } catch (EmptyResultDataAccessException ignored) {
-            return Optional.empty();
+            throw new NotFoundException("Фильм с таким id не существует");
         }
 
     }

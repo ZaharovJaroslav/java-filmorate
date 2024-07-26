@@ -124,10 +124,10 @@ public class FilmDbStorage implements FilmStorage {
                     new DirectorMapper(), filmId);
             thisFilm.setDirectors(directors);
 
-            return Optional.of(thisFilm);
+            return Optional.ofNullable(thisFilm);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Фильм с id {} не найден", filmId);
-            return Optional.empty();
+            throw new NotFoundException("Фильм с таким id не существует");
         }
     }
 

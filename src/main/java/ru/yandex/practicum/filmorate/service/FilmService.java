@@ -58,17 +58,17 @@ public class FilmService {
         log.debug("addFilm(({})", film);
         checkIfExists(film);
         validationFilm(film);
-        Set<Genre> genres = new HashSet<>(film.getGenres());
+        Set<Genre> genres = film.getGenres();
 
         Optional<Film> thisFilm = filmStorage.checkForRepeat(film);
         if (thisFilm.isPresent()) {
             Film filmUpdated = thisFilm.get();
-            filmStorage.updateGenres(filmUpdated.getId(), genres.stream().toList());
+            filmStorage.updateGenres(filmUpdated.getId(), genres);
             filmUpdated.setGenres(filmStorage.getGenres(filmUpdated.getId()));
             return filmUpdated;
         } else {
             Film newFilm = filmStorage.addFilm(film);
-            filmStorage.addGenres(newFilm.getId(), genres.stream().toList());
+            filmStorage.addGenres(newFilm.getId(), genres);
             newFilm.setGenres(filmStorage.getGenres(newFilm.getId()));
             newFilm.setMpa(mpaDao.getMpaById(newFilm.getMpa().getId()));
             newFilm.setDirectors(getDirectorsByIds(film.getDirectors()));
@@ -93,8 +93,8 @@ public class FilmService {
         Optional<Film> film = filmStorage.getFilmById(filmId);
         if (film.isPresent()) {
             Film thisFilm = film.get();
-            Set<Genre> genres = new HashSet<>(filmStorage.getGenres(filmId));
-            thisFilm.setGenres(genres.stream().toList());
+            Set<Genre> genres = filmStorage.getGenres(filmId);
+            thisFilm.setGenres(genres);
             thisFilm.setMpa(mpaDao.getMpaById(thisFilm.getMpa().getId()));
             setDirectorsForFilm(thisFilm);
             return thisFilm;
@@ -124,6 +124,7 @@ public class FilmService {
         for (Film film : films) {
             film.setGenres(filmStorage.getGenres(film.getId()));
             film.setMpa(mpaDao.getMpaById(film.getMpa().getId()));
+            film.setDirectors(directorDao.getDirectorsByFilmId(film.getId()));
         }
         return films;
     }
@@ -151,7 +152,7 @@ public class FilmService {
             return films;
     }
 
-    public List<Genre> getGenresFilm(int filmId) {
+    public Set<Genre> getGenresFilm(int filmId) {
         log.debug("getGenresFilm");
         filmStorage.getFilmById(filmId);
         return filmStorage.getGenres(filmId);

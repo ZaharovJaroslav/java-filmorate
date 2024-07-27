@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.enums.EventOperation;
 import ru.yandex.practicum.filmorate.enums.UserEventType;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.UserEvent;
+import ru.yandex.practicum.filmorate.storage.db.user.UserStorage;
 import ru.yandex.practicum.filmorate.storage.db.userEvent.UserEventStorage;
 
 import java.util.Collection;
@@ -16,10 +18,12 @@ import java.util.Optional;
 @Service
 public class UserEventService {
     private final UserEventStorage userEventStorage;
+    private final UserStorage userStorage;
 
     @Autowired
-    public UserEventService(@Qualifier("UserEventDbStorage") UserEventStorage userEventStorage) {
+    public UserEventService(@Qualifier("UserEventDbStorage") UserEventStorage userEventStorage, UserStorage userStorage) {
         this.userEventStorage = userEventStorage;
+        this.userStorage = userStorage;
     }
 
     /**
@@ -28,7 +32,8 @@ public class UserEventService {
      * @param userId ИД пользователя
      * @return Список событий
      */
-    public Collection<UserEvent> getByUser(long userId) {
+    public Collection<UserEvent> getByUser(int userId) {
+        checkIfUserExists(userId);
         return userEventStorage.getByUser(userId);
     }
 
@@ -125,5 +130,12 @@ public class UserEventService {
             return;
         }
         log.debug("Создано событие <{} - {}> для пользователя <{}>. Объект: <{}>", userEvent.getEventType(), userEvent.getOperation(), userEvent.getUserId(), userEvent.getEntityId());
+    }
+
+    private void checkIfUserExists(int userId) {
+        if (!userStorage.getUserById(userId).isPresent()) {
+            log.warn("Пользователь с id {} не найден", userId);
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+        }
     }
 }

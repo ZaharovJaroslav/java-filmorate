@@ -25,7 +25,7 @@ public class UserEventDbStorage implements UserEventStorage {
     @Override
     public Collection<UserEvent> getByUser(long userId) {
         List<UserEvent> userEvents = jdbcTemplate.query("SELECT * FROM user_events " +
-                "WHERE user_id = ?", new UserEventMapper(), userId);
+                "WHERE user_id = ? ORDER BY event_id", new UserEventMapper(), userId);
         log.trace("UserEventDbStorage::getByUser success: {}", userEvents);
         return userEvents;
     }

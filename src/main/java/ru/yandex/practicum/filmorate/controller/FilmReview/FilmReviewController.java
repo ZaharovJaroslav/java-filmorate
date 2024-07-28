@@ -20,9 +20,12 @@ import java.util.Optional;
 public class FilmReviewController {
     private final FilmReviewService filmReviewService;
 
+    CreateFilmReviewValidator validator;
+
     @Autowired
-    public FilmReviewController(FilmReviewService filmReviewService) {
+    public FilmReviewController(FilmReviewService filmReviewService, CreateFilmReviewValidator validator) {
         this.filmReviewService = filmReviewService;
+        this.validator = validator;
     }
 
     @GetMapping
@@ -37,7 +40,7 @@ public class FilmReviewController {
 
     @PostMapping
     public FilmReview create(@RequestBody FilmReviewRequest request) {
-        CreateFilmReviewValidator validator = new CreateFilmReviewValidator(request);
+        validator.setRequest(request);
         validator.validate();
         if (!validator.isValid()) {
             throw new ValidationException("Невалидные параметры", validator.getMessages());
@@ -47,7 +50,7 @@ public class FilmReviewController {
 
     @PutMapping
     public FilmReview update(@RequestBody FilmReviewRequest request) {
-        UpdateFilmReviewValidator validator = new UpdateFilmReviewValidator(request);
+        validator.setRequest(request);
         validator.validate();
         if (!validator.isValid()) {
             throw new ValidationException("Невалидные параметры", validator.getMessages());

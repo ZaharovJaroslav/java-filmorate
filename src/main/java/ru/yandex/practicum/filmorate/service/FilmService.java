@@ -10,7 +10,10 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.enums.FilmFilter;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.storage.db.Like.LikeDao;
 import ru.yandex.practicum.filmorate.storage.db.directors.DirectorDao;
 import ru.yandex.practicum.filmorate.storage.db.film.FilmStorage;
@@ -33,6 +36,7 @@ public class FilmService {
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
     private final DirectorDao directorDao;
+    private final UserService userService;
     private final UserEventService userEventService;
 
     @Autowired
@@ -42,6 +46,7 @@ public class FilmService {
                        MpaDao mpaDao,
                        LikeDao likeDao,
                        DirectorDao directorDao,
+                       UserService userService,
                        UserEventService userEventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
@@ -49,6 +54,7 @@ public class FilmService {
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
         this.directorDao = directorDao;
+        this.userService = userService;
         this.userEventService = userEventService;
     }
 
@@ -132,8 +138,8 @@ public class FilmService {
     public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
         log.debug("getCommonFilmsSortedByPopular({},{})", userId, friendId);
         Collection<Film> films = new ArrayList<>();
-        checkNotExsistUser(userId);
-        checkNotExsistUser(friendId);
+        userService.checkNotExistsUser(userId);
+        userService.checkNotExistsUser(friendId);
         Optional<Collection<Like>> userLikes = likeDao.getAllLikesUser(userId);
         Optional<Collection<Like>> friendLikes = likeDao.getAllLikesUser(friendId);
 
@@ -237,7 +243,7 @@ public class FilmService {
     private void likeChecker(int filmId, int userId) {
         log.debug("likeChecker({}, {})", filmId, userId);
         filmStorage.getFilmById(filmId);
-        userStorage.checkNotExsistUser(userId);
+        userService.checkNotExistsUser(userId);
     }
 
     private void checkIfExists(Film film) {
@@ -249,13 +255,6 @@ public class FilmService {
             if (!genreDao.isContains(genre.getId())) {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
-        }
-    }
-
-    public void checkNotExsistUser(int userId) {
-        Optional<User> thisUser = userStorage.getUserById(userId);
-        if (thisUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
     }
 

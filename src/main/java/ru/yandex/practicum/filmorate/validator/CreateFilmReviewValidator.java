@@ -6,9 +6,16 @@ import ru.yandex.practicum.filmorate.request.FilmReviewRequest;
 
 @Slf4j
 public class CreateFilmReviewValidator extends AbstractValidator {
-    protected final FilmReviewRequest request;
+    protected FilmReviewRequest request;
+
+    public CreateFilmReviewValidator() {
+    }
 
     public CreateFilmReviewValidator(FilmReviewRequest request) {
+        this.request = request;
+    }
+
+    public void setRequest(FilmReviewRequest request) {
         this.request = request;
     }
 

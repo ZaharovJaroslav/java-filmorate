@@ -93,11 +93,6 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public void checkNotExsistUser(int userId) {
-
-    }
-
-    @Override
     public Optional<Integer> findUserWithMaxCommonLikes(int id) {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT lB.user_id " +

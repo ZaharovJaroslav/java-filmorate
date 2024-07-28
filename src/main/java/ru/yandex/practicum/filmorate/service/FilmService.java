@@ -2,7 +2,6 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -15,7 +14,6 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Like;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.db.Like.LikeDao;
 import ru.yandex.practicum.filmorate.storage.db.directors.DirectorDao;
 import ru.yandex.practicum.filmorate.storage.db.film.FilmStorage;
@@ -26,7 +24,8 @@ import ru.yandex.practicum.filmorate.storage.mpa.MpaDao;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.yandex.practicum.filmorate.storage.db.film.FilmStorage.*;
+import static ru.yandex.practicum.filmorate.storage.db.film.FilmStorage.DESCRIPTION_LENGTH;
+import static ru.yandex.practicum.filmorate.storage.db.film.FilmStorage.MOVIE_BIRTHDAY;
 
 @Slf4j
 @Service
@@ -37,6 +36,7 @@ public class FilmService {
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
     private final DirectorDao directorDao;
+    private final UserService userService;
     private final UserEventService userEventService;
 
     @Autowired
@@ -46,6 +46,7 @@ public class FilmService {
                        MpaDao mpaDao,
                        LikeDao likeDao,
                        DirectorDao directorDao,
+                       UserService userService,
                        UserEventService userEventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
@@ -53,6 +54,7 @@ public class FilmService {
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
         this.directorDao = directorDao;
+        this.userService = userService;
         this.userEventService = userEventService;
     }
 
@@ -136,8 +138,8 @@ public class FilmService {
     public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
         log.debug("getCommonFilmsSortedByPopular({},{})", userId, friendId);
         Collection<Film> films = new ArrayList<>();
-        checkNotExsistUser(userId);
-        checkNotExsistUser(friendId);
+        userService.checkNotExistsUser(userId);
+        userService.checkNotExistsUser(friendId);
         Optional<Collection<Like>> userLikes = likeDao.getAllLikesUser(userId);
         Optional<Collection<Like>> friendLikes = likeDao.getAllLikesUser(friendId);
 
@@ -152,8 +154,9 @@ public class FilmService {
                     .map(like -> getFilmById(like.getFilmId()))
                     .sorted(this::compare)
                     .collect(Collectors.toList());
-        } else
+        } else {
             return films;
+        }
     }
 
     public Set<Genre> getGenresFilm(int filmId) {
@@ -240,7 +243,7 @@ public class FilmService {
     private void likeChecker(int filmId, int userId) {
         log.debug("likeChecker({}, {})", filmId, userId);
         filmStorage.getFilmById(filmId);
-        userStorage.checkNotExsistUser(userId);
+        userService.checkNotExistsUser(userId);
     }
 
     private void checkIfExists(Film film) {
@@ -252,13 +255,6 @@ public class FilmService {
             if (!genreDao.isContains(genre.getId())) {
                 throw new ValidationException("Не удается найти жанр фильма с идентификатором" + genre.getId());
             }
-        }
-    }
-
-    public void checkNotExsistUser(int userId) {
-        Optional<User> thisUser = userStorage.getUserById(userId);
-        if (thisUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
     }
 

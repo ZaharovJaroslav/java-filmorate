@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.FilmReview;
 import ru.yandex.practicum.filmorate.request.FilmReviewRequest;
 import ru.yandex.practicum.filmorate.service.FilmReviewService;
 import ru.yandex.practicum.filmorate.validator.CreateFilmReviewValidator;
-import ru.yandex.practicum.filmorate.validator.UpdateFilmReviewValidator;
 
 import java.util.Collection;
 import java.util.Optional;

@@ -36,7 +36,6 @@ public class FilmService {
     private final MpaDao mpaDao;
     private final LikeDao likeDao;
     private final DirectorDao directorDao;
-    private final UserService userService;
     private final UserEventService userEventService;
 
     @Autowired
@@ -46,7 +45,6 @@ public class FilmService {
                        MpaDao mpaDao,
                        LikeDao likeDao,
                        DirectorDao directorDao,
-                       UserService userService,
                        UserEventService userEventService) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
@@ -54,7 +52,6 @@ public class FilmService {
         this.mpaDao = mpaDao;
         this.likeDao = likeDao;
         this.directorDao = directorDao;
-        this.userService = userService;
         this.userEventService = userEventService;
     }
 
@@ -138,8 +135,8 @@ public class FilmService {
     public Collection<Film> getCommonFilmsSortedByPopular(int userId, int friendId) {
         log.debug("getCommonFilmsSortedByPopular({},{})", userId, friendId);
         Collection<Film> films = new ArrayList<>();
-        userService.checkNotExistsUser(userId);
-        userService.checkNotExistsUser(friendId);
+        userStorage.checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(friendId);
         Optional<Collection<Like>> userLikes = likeDao.getAllLikesUser(userId);
         Optional<Collection<Like>> friendLikes = likeDao.getAllLikesUser(friendId);
 
@@ -243,7 +240,7 @@ public class FilmService {
     private void likeChecker(int filmId, int userId) {
         log.debug("likeChecker({}, {})", filmId, userId);
         filmStorage.getFilmById(filmId);
-        userService.checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(userId);
     }
 
     private void checkIfExists(Film film) {

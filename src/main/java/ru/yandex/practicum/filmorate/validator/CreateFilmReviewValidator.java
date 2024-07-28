@@ -1,25 +1,19 @@
 package ru.yandex.practicum.filmorate.validator;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.request.FilmReviewRequest;
 
 
 @Slf4j
-public class CreateFilmReviewValidator extends AbstractValidator {
-    protected FilmReviewRequest request;
-
+@Component("CreateFilmReviewValidator")
+public class CreateFilmReviewValidator extends Validator {
     public CreateFilmReviewValidator() {
+        super();
     }
 
-    public CreateFilmReviewValidator(FilmReviewRequest request) {
-        this.request = request;
-    }
-
-    public void setRequest(FilmReviewRequest request) {
-        this.request = request;
-    }
-
-    public void validate() {
+    public void validate(FilmReviewRequest request) {
+        this.clean();
         if (request.getFilmId() == null) {
             log.error("Не указан идентификатор фильма");
             validateResult.add("Не указан идентификатор фильма");

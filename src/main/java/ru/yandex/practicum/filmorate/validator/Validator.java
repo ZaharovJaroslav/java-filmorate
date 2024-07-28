@@ -1,17 +1,15 @@
 package ru.yandex.practicum.filmorate.validator;
 
-import ru.yandex.practicum.filmorate.model.Validator;
-
 import java.util.ArrayList;
 
 /**
  * Абстрактный класс для валидации
  */
-abstract class AbstractValidator {
-    protected Validator validateResult;
+public class Validator {
+    protected ru.yandex.practicum.filmorate.model.Validator validateResult;
 
-    public AbstractValidator() {
-        this.validateResult = new Validator();
+    public Validator() {
+        this.validateResult = new ru.yandex.practicum.filmorate.model.Validator();
     }
 
     public ArrayList<String> getMessages() {
@@ -22,5 +20,7 @@ abstract class AbstractValidator {
         return validateResult.isValid();
     }
 
-    abstract void validate();
+    protected void clean() {
+        this.validateResult = new ru.yandex.practicum.filmorate.model.Validator();
+    }
 }

@@ -49,7 +49,7 @@ public class UserService {
 
     public User updateUser(User user) {
         log.debug("updateUser");
-        checkNotExistsUser(user.getId());
+        userStorage.checkNotExistsUser(user.getId());
         User userToUpdate = validationUser(user);
 
         return userStorage.updateUser(userToUpdate);
@@ -58,7 +58,7 @@ public class UserService {
 
     public void deleteUserById(int userId) {
         log.debug("getGenreById({})", userId);
-        checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(userId);
         userStorage.deleteUserById(userId);
     }
 
@@ -112,8 +112,8 @@ public class UserService {
 
     public void addFriend(int userId, int newFriendId) {
         log.debug("addFriend({}, {})", userId, newFriendId);
-        checkNotExistsUser(userId);
-        checkNotExistsUser(newFriendId);
+        userStorage.checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(newFriendId);
         validationUserId(userId, newFriendId);
 
         boolean isFriend = friendshipDao.isFriend(userId, newFriendId);
@@ -128,8 +128,8 @@ public class UserService {
     public void deleteFromFriends(int userId, int userToDeleteId) {
         log.debug("deleteFromFriends({}, {})", userId, userToDeleteId);
         validationUserId(userId, userToDeleteId);
-        checkNotExistsUser(userId);
-        checkNotExistsUser(userToDeleteId);
+        userStorage.checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(userToDeleteId);
 
         if (!friendshipDao.isFriend(userId, userToDeleteId)) {
             throw new NotContentException("Пользователь с id = userId1  и userId2 не дружат");
@@ -153,7 +153,7 @@ public class UserService {
 
     public List<User> getUsersFriends(int userId) {
         log.debug("getUsersFriends");
-        checkNotExistsUser(userId);
+        userStorage.checkNotExistsUser(userId);
 
         List<User> friends = friendshipDao.getFriends(userId).stream()
                 .mapToInt(Integer::valueOf)
@@ -171,13 +171,6 @@ public class UserService {
         }
         if (userId1 == userId2) {
             throw new ValidationException("id пользоватлей не могут быть одинаковыми");
-        }
-    }
-
-    public void checkNotExistsUser(int userId) {
-        Optional<User> thisUser = userStorage.getUserById(userId);
-        if (thisUser.isEmpty()) {
-            throw new NotFoundException("Пользователь с id = " + userId + "не существует");
         }
     }
 

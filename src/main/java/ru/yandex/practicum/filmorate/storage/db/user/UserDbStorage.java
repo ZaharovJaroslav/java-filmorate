@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.mapper.UserMapper;
 
@@ -104,6 +105,14 @@ public class UserDbStorage implements UserStorage {
                     "ORDER BY count(*) desc limit 1", Integer.class, id));
         } catch (EmptyResultDataAccessException exception) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public void checkNotExistsUser(int userId) {
+        Optional<User> thisUser = getUserById(userId);
+        if (thisUser.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не существует");
         }
     }
 }

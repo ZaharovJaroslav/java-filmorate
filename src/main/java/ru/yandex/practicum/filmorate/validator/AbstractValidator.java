@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * Абстрактный класс для валидации
  */
-abstract class AbstractValidator {
+public class AbstractValidator {
     protected Validator validateResult;
 
     public AbstractValidator() {
@@ -21,6 +21,4 @@ abstract class AbstractValidator {
     public boolean isValid() {
         return validateResult.isValid();
     }
-
-    abstract void validate();
 }

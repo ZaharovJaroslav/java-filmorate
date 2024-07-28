@@ -2,12 +2,14 @@ package ru.yandex.practicum.filmorate.controller.FilmReview;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.FilmReview;
 import ru.yandex.practicum.filmorate.request.FilmReviewRequest;
 import ru.yandex.practicum.filmorate.service.FilmReviewService;
 import ru.yandex.practicum.filmorate.validator.CreateFilmReviewValidator;
+import ru.yandex.practicum.filmorate.validator.UpdateFilmReviewValidator;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -18,13 +20,16 @@ import java.util.Optional;
 @RequestMapping("/reviews")
 public class FilmReviewController {
     private final FilmReviewService filmReviewService;
-
-    CreateFilmReviewValidator validator;
+    private final CreateFilmReviewValidator createFilmReviewValidator;
+    private final UpdateFilmReviewValidator updateFilmReviewValidator;
 
     @Autowired
-    public FilmReviewController(FilmReviewService filmReviewService, CreateFilmReviewValidator validator) {
+    public FilmReviewController(FilmReviewService filmReviewService,
+                                @Qualifier("CreateFilmReviewValidator") CreateFilmReviewValidator createFilmReviewValidator,
+                                @Qualifier("UpdateFilmReviewValidator") UpdateFilmReviewValidator updateFilmReviewValidator) {
         this.filmReviewService = filmReviewService;
-        this.validator = validator;
+        this.createFilmReviewValidator = createFilmReviewValidator;
+        this.updateFilmReviewValidator = updateFilmReviewValidator;
     }
 
     @GetMapping
@@ -39,20 +44,18 @@ public class FilmReviewController {
 
     @PostMapping
     public FilmReview create(@RequestBody FilmReviewRequest request) {
-        validator.setRequest(request);
-        validator.validate();
-        if (!validator.isValid()) {
-            throw new ValidationException("Невалидные параметры", validator.getMessages());
+        createFilmReviewValidator.validate(request);
+        if (!createFilmReviewValidator.isValid()) {
+            throw new ValidationException("Невалидные параметры", createFilmReviewValidator.getMessages());
         }
         return filmReviewService.create(request);
     }
 
     @PutMapping
     public FilmReview update(@RequestBody FilmReviewRequest request) {
-        validator.setRequest(request);
-        validator.validate();
-        if (!validator.isValid()) {
-            throw new ValidationException("Невалидные параметры", validator.getMessages());
+        updateFilmReviewValidator.validate(request);
+        if (!updateFilmReviewValidator.isValid()) {
+            throw new ValidationException("Невалидные параметры", updateFilmReviewValidator.getMessages());
         }
         return filmReviewService.update(request);
     }

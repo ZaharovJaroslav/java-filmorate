@@ -7,12 +7,13 @@ import ru.yandex.practicum.filmorate.request.FilmReviewRequest;
 
 @Slf4j
 @Component("CreateFilmReviewValidator")
-public class CreateFilmReviewValidator extends AbstractValidator {
+public class CreateFilmReviewValidator extends Validator {
     public CreateFilmReviewValidator() {
         super();
     }
 
     public void validate(FilmReviewRequest request) {
+        this.clean();
         if (request.getFilmId() == null) {
             log.error("Не указан идентификатор фильма");
             validateResult.add("Не указан идентификатор фильма");

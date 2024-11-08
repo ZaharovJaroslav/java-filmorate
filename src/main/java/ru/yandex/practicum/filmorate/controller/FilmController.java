@@ -1,78 +1,105 @@
+
 package ru.yandex.practicum.filmorate.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.time.*;
 import java.util.*;
 
+
+@Slf4j
 @RestController
-@RequestMapping("/films")
 public class FilmController {
-    private static final int DESCRIPTION_LENGTH = 200;
-    private static final LocalDate MOVIE_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER,28);
-    private final Map<Integer, Film> films = new HashMap<>();
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
-    private int id;
+    private final FilmService filmService;
 
-
-    private int setId() {
-        return ++id;
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
-    @PostMapping
+    @PostMapping("/films")
+    @ResponseStatus(HttpStatus.CREATED)
     public Film addFilm(@RequestBody Film film) {
-        int lastId = setId();
-        if (film.getId() <= lastId) {
-            film.setId(lastId);
-        } else {
-            id = film.getId();
+        if (film == null) {
+            throw new NotFoundException("Не указан фильм для создания");
         }
-        log.info("Добалвение фильма");
-        Film newFilm = validationFilm(film);
-        films.put(lastId, newFilm);
-        log.info("Фильм {} успешно добавлен", newFilm.getName());
-        return newFilm;
+        return filmService.addFilm(film);
     }
 
-    @PutMapping
+    @GetMapping("/films/{id}")
+    public Film getFilmById(@PathVariable int id) {
+        return filmService.getFilmById(id);
+    }
+
+    @PutMapping("/films")
     public Film updateFilm(@RequestBody Film film) {
-        if (films.containsKey(film.getId())) {
-            Film oldfilm  = films.get(film.getId());
-            log.info("Обновление пользователя: id = {}; name = {}", oldfilm.getId(), oldfilm.getName());
-            oldfilm = validationFilm(film);
-            log.info("Пользователь обновлен: id = {}; name = {}", oldfilm.getId(), oldfilm.getName());
-            return oldfilm;
+        if (film == null) {
+            throw new NotFoundException("Не указан фильм для обновления");
         }
-        log.warn("Ошибка обновления пользователя: id = {}; name = {}", film.getId(), film.getName());
-        throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
+        return filmService.updateFilm(film);
     }
 
-    public Film validationFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            throw new ValidationException("Название не может быть пустым");
-        }
-        if (film.getDescription() == null || film.getDescription().isBlank()
-                                          || film.getDescription().length() > DESCRIPTION_LENGTH) {
-            throw new ValidationException("Описание не может быть путстым, максимальная длина описания — 200 символов");
-        }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(MOVIE_BIRTHDAY)) {
-            throw new ValidationException("Дата релиза не может быть пустым, а так же раньше 28 декабря 1895 года");
-        }
-        if (film.getDuration() <= 0) {
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом " +
-                                          "а так же не может быть меньше 1 секунды");
-        }
-        return film;
-    }
-
-    @GetMapping
+    @GetMapping("/films")
     protected Collection<Film> getFilms() {
-        return films.values();
+        return filmService.getFilms();
     }
 
+    @PutMapping("/films/{id}/like/{userId}")
+    public void addLike(@PathVariable("id") int id,
+                        @PathVariable("userId") int userId) {
+        filmService.addLike(id, userId);
+    }
+
+    @GetMapping("/films/popular")
+    public Collection<Film> getPopularMoviesByLikes(@RequestParam(defaultValue = "10") int count,
+                                                    @RequestParam Optional<Integer> genreId,
+                                                    @RequestParam Optional<Integer> year) {
+        return filmService.getPopularMoviesByLikes(count, genreId, year);
+    }
+
+    @GetMapping("/films/id")
+    Collection<Genre> getGenresFilm(@PathVariable int id) {
+        return filmService.getGenresFilm(id);
+    }
+
+    @DeleteMapping("/films/{id}/like/{userId}")
+    public void removeLike(@PathVariable int id, @PathVariable int userId) {
+        filmService.dislike(id, userId);
+    }
+
+    @GetMapping("/films/director/{directorId}")
+    public List<Film> getFilmsByDirector(@PathVariable long directorId, @RequestParam String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/films/search")
+    public ResponseEntity<List<Film>> searchFilms(@RequestParam String query, @RequestParam String by) {
+        String[] searchFields = by.split(",");
+        List<Film> films = filmService.searchFilms(query, searchFields);
+        return ResponseEntity.ok(films);
+    }
+
+    @DeleteMapping("/films/{id}")
+    public ResponseEntity<Void> deleteFilmById(@PathVariable("id") int id) {
+        try {
+            filmService.deleteFilmById(id);
+            return ResponseEntity.noContent().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/films/common")
+    public Collection<Film> getCommonFilmsSortedByPopular(@RequestParam int userId,
+                                                          @RequestParam int friendId) {
+        return filmService.getCommonFilmsSortedByPopular(userId,friendId);
+    }
 }
+
